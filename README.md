@@ -80,4 +80,4 @@ src/
 
 ## 示例
 
-参考 `examples` 目录。
+参考 [examples](./examples) 目录。
