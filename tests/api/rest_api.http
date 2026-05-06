@@ -1,0 +1,61 @@
+POST http://localhost:8080/a2a/rest/message:stream
+Content-Type: application/json; charset=utf-8
+A2A-Version: 1.0
+
+{
+    "message": {
+        "contextId": "981968b0-f051-4c7a-abb3-1f5d380effec",
+        // "taskId": "358a1e8b-41fe-4f64-b603-c45cbedd3530",
+        "messageId": "120ec73f93024993becf954d03a672bc",
+        "parts": [
+            {
+                "data": {"content": "你好"}
+            }
+        ],
+        "role": "ROLE_USER"
+    }
+}
+
+### 人工审批
+POST http://localhost:8080/a2a/rest/message:stream
+Content-Type: application/json
+A2A-Version: 1.0
+
+{
+    "message": {
+        "contextId": "981968b0-f051-4c7a-abb3-1f5d380effec",
+        // "taskId": "358a1e8b-41fe-4f64-b603-c45cbedd3530",
+        "messageId": "120ec73f93024993becf954d03a672bc",
+        "parts": [
+            {
+                "data": {"content": "将 hello 写入文件 files/hello.txt"}
+            }
+        ],
+        "role": "ROLE_USER"
+    }
+}
+
+### 审批
+POST http://localhost:8080/a2a/rest/message:stream
+Content-Type: application/json
+A2A-Version: 1.0
+
+{
+    "message": {
+        "contextId": "981968b0-f051-4c7a-abb3-1f5d380effec",
+        "taskId": "4dcf6d45-2d63-4406-97b2-eff975930927",
+        "messageId": "120ec73f93024993becf954d03a672bc",
+        "parts": [
+            {
+                "data": {
+                    "resume": {
+                        "5503d10ee31aa8808db7b4bc1b66fdc0": {
+                            "decisions": [{"type": "approve"}]
+                        }
+                    }
+                }
+            }
+        ],
+        "role": "ROLE_USER"
+    }
+}

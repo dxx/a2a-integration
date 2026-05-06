@@ -1,0 +1,90 @@
+POST http://localhost:8080/a2a/jsonrpc
+Content-Type: application/json; charset=utf-8
+A2A-Version: 1.0
+
+{
+    "id": "12113c25-b752-473f-977e-c9ad33cf4f19",
+    "jsonrpc": "2.0",
+    "method": "SendStreamingMessage",
+    "params": {
+        "message": {
+            "contextId": "981968b0-f051-4c7a-abb3-1f5d380effec",
+            // "taskId": "358a1e8b-41fe-4f64-b603-c45cbedd3530",
+            "messageId": "120ec73f93024993becf954d03a672bc",
+            "parts": [
+                {
+                    "data": {"content": "你好"}
+                }
+            ],
+            "role": "ROLE_USER"
+        }
+    }
+}
+
+### 人工审批
+POST http://localhost:8080/a2a/jsonrpc
+Content-Type: application/json
+A2A-Version: 1.0
+
+{
+    "id": "12113c25-b752-473f-977e-c9ad33cf4f19",
+    "jsonrpc": "2.0",
+    "method": "SendStreamingMessage",
+    "params": {
+        "message": {
+            "contextId": "981968b0-f051-4c7a-abb3-1f5d380effec",
+            // "taskId": "358a1e8b-41fe-4f64-b603-c45cbedd3530",
+            "messageId": "120ec73f93024993becf954d03a672bc",
+            "parts": [
+                {
+                    "data": {"content": "将 hello 写入文件 files/hello.txt"}
+                }
+            ],
+            "role": "ROLE_USER"
+        }
+    }
+}
+
+### 审批
+POST http://localhost:8080/a2a/jsonrpc
+Content-Type: application/json
+A2A-Version: 1.0
+
+{
+    "id": "12113c25-b752-473f-977e-c9ad33cf4f19",
+    "jsonrpc": "2.0",
+    "method": "SendStreamingMessage",
+    "params": {
+        "message": {
+            "contextId": "981968b0-f051-4c7a-abb3-1f5d380effec",
+            "taskId": "1193af98-dd83-4ce3-b5a4-554f81bcd148",
+            "messageId": "120ec73f93024993becf954d03a672bc",
+            "parts": [
+                {
+                    "data": {
+                        "resume": {
+                            "c57c526ed9b43500f7c993ff6b6bfc57": {
+                                "decisions": [{"type": "approve"}]
+                            }
+                        }
+                    }
+                }
+            ],
+            "role": "ROLE_USER"
+        }
+    }
+}
+
+###
+POST http://localhost:8080/a2a/jsonrpc
+Content-Type: application/json
+A2A-Version: 1.0
+
+{
+    "id": "12113c25-b752-473f-977e-c9ad33cf4f19",
+    "jsonrpc": "2.0",
+    "method": "GetTask",
+    "params": {
+        "id": "feb06136-c95a-4589-bd34-f50192084cfb"
+    }
+}

@@ -1,0 +1,92 @@
+POST http://localhost:8080/a2a/jsonrpc
+Content-Type: application/json
+
+{
+    "id": "12113c25-b752-473f-977e-c9ad33cf4f19",
+    "jsonrpc": "2.0",
+    "method": "message/stream",
+    "params": {
+        "message": {
+            "contextId": "981968b0-f051-4c7a-abb3-1f5d380effec",
+            // "taskId": "358a1e8b-41fe-4f64-b603-c45cbedd3530",
+            "kind": "message",
+            "messageId": "120ec73f93024993becf954d03a672bc",
+            "parts": [
+                {
+                    "kind": "data",
+                    "data": {"content": "111"}
+                }
+            ],
+            "role": "user"
+        }
+    }
+}
+
+### 人工审批
+POST http://localhost:8080
+Content-Type: application/json
+
+{
+    "id": "12113c25-b752-473f-977e-c9ad33cf4f19",
+    "jsonrpc": "2.0",
+    "method": "message/stream",
+    "params": {
+        "message": {
+            "contextId": "981968b0-f051-4c7a-abb3-1f5d380effec",
+            // "taskId": "358a1e8b-41fe-4f64-b603-c45cbedd3530",
+            "kind": "message",
+            "messageId": "120ec73f93024993becf954d03a672bc",
+            "parts": [
+                {
+                    "kind": "data",
+                    "data": {"content": "将 hello 写入文件 files/hello.txt"}
+                }
+            ],
+            "role": "user"
+        }
+    }
+}
+
+### 审批
+POST http://localhost:8080
+Content-Type: application/json
+
+{
+    "id": "12113c25-b752-473f-977e-c9ad33cf4f19",
+    "jsonrpc": "2.0",
+    "method": "message/stream",
+    "params": {
+        "message": {
+            "contextId": "981968b0-f051-4c7a-abb3-1f5d380effec",
+            "taskId": "e299ff60-e70c-45b7-bc87-cfab5dc8b40d",
+            "kind": "message",
+            "messageId": "120ec73f93024993becf954d03a672bc",
+            "parts": [
+                {
+                    "kind": "data",
+                    "data": {
+                        "resume": {
+                            "407917fe467ebc74e16f91a1c5fc2987": {
+                                "decisions": [{"type": "approve"}]
+                            }
+                        }
+                    }
+                }
+            ],
+            "role": "user"
+        }
+    }
+}
+
+###
+POST http://localhost:8080
+Content-Type: application/json
+
+{
+    "id": "12113c25-b752-473f-977e-c9ad33cf4f19",
+    "jsonrpc": "2.0",
+    "method": "tasks/get",
+    "params": {
+        "id": "feb06136-c95a-4589-bd34-f50192084cfb"
+    }
+}
