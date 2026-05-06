@@ -2,7 +2,6 @@
 
 本目录包含 9 个子目录，展示了 A2A (Agent-to-Agent) 协议的各种实现方式。
 
----
 
 ### 目录结构
 
@@ -19,7 +18,6 @@ examples/
 └── converter/          # 自定义内容转换器
 ```
 
----
 
 ### 1. langgraph_agent/ - 核心模块
 
@@ -37,7 +35,6 @@ examples/
 - 支持工具调用 (`read_file`, `write_file`)
 - HITL 模式下可对危险操作进行人工审批
 
----
 
 ### 2. send_message/ - 基础消息发送示例
 
@@ -54,7 +51,6 @@ uv run send_message/client.py
 - `send_message_streaming()` 流式调用，异步响应
 - 最基础的 A2A 通信示例
 
----
 
 ### 3. jsonrpc/ - JSON-RPC 协议示例
 
@@ -71,7 +67,6 @@ uv run jsonrpc/client.py
 - 暴露 `/a2a/jsonrpc` 端点
 - 使用 `RequestContext` 传递 metadata 和 header 参数
 
----
 
 ### 4. rest/ - REST 协议示例
 
@@ -88,7 +83,6 @@ uv run rest/client.py
 - 暴露 `/a2a/rest` 端点
 - 使用 `RequestContext` 传递 metadata 和 header 参数
 
----
 
 ### 5. grpc/ - gRPC 协议示例
 
@@ -105,7 +99,6 @@ uv run grpc/client.py
 - 兼容版本端口: 18081
 - HTTP 服务端口: 8080
 
----
 
 ### 6. hitl/ - 人工审批示例
 
@@ -122,7 +115,6 @@ uv run hitl/client.py
 - 客户端收到中断后可以输入 `approve` 或 `reject` 决定是否继续
 - 使用 `interrupt_id` 和 `interrupt` 跟踪中断状态
 
----
 
 ### 7. extend_agent_card/ - 扩展 Agent Card 示例
 
@@ -140,7 +132,6 @@ uv run extend_agent_card/client.py
 - 扩展技能：认证后才可用
 - 客户端可调用 `get_extended_agent_card()` 获取扩展 Agent Card
 
----
 
 ### 8. multi/ - 多协议示例
 
@@ -157,7 +148,6 @@ uv run multi/client_jsonrpc.py  # JSON-RPC 客户端
 - 服务端同时暴露 `/a2a/jsonrpc` 和 `/a2a/rest` 端点
 - 提供两个客户端示例分别使用 REST 和 JSON-RPC 协议
 
----
 
 ### 9. converter/ - 自定义内容转换器示例
 
@@ -174,7 +164,6 @@ uv run converter/client.py
 - `CustomResponsePartConverter` 自定义响应转换器
 - 提供 `server_hitl.py` 和 `client_hitl.py` 支持 HITL 版本
 
----
 
 ### 共同特点
 

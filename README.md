@@ -2,7 +2,6 @@
 
 基于 `a2a-sdk` 的 A2A (Agent-to-Agent) 协议集成实现，支持多种通信协议。
 
----
 
 ## 核心模块
 
@@ -13,7 +12,6 @@ src/
 └── a2a_common/        # 公共组件（协议常量）
 ```
 
----
 
 ### a2a_common/ - 公共组件
 
@@ -27,7 +25,6 @@ src/
 | `PROTOCOL_VERSION_1_0` | 协议版本 1.0 |
 | `PROTOCOL_VERSION_0_3` | 协议版本 0.3 (兼容) |
 
----
 
 ### a2a_client/ - 客户端模块
 
@@ -45,7 +42,6 @@ src/
 - `converter.py` - 请求/响应转换器
 - `context.py` - 请求上下文
 
----
 
 ### a2a_server/ - 服务端模块
 
@@ -64,7 +60,6 @@ src/
 - `converter.py` - 请求/响应转换器
 - `context.py` - 请求上下文
 
----
 
 ## 协议支持
 
@@ -74,7 +69,6 @@ src/
 | REST/JSON | HTTP | 1.0, 0.3 |
 | gRPC | HTTP/2 | 1.0, 0.3 |
 
----
 
 ## 设计
 
@@ -83,7 +77,6 @@ src/
 3. **RunnableAgent 抽象** - 将 Agent 逻辑与 A2A 协议分离
 4. **Task 状态机** - `WORKING`, `INPUT_REQUIRED`, `FAILED`, `COMPLETED`
 
----
 
 ## 示例
 
