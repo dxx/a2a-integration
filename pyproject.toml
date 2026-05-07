@@ -5,11 +5,14 @@ description = "Implementation of A2A (Agent to Agent) protocol integration based
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    # a2a 依赖模块
     "a2a-sdk>=1.0.2",
-    "langchain>=1.2.15",
-    "langchain-openai>=1.2.1",
     "protobuf==6.33.6", # 锁定版本。a2a-sdk 的 protobuf 版本兼容需小于 7.x 大于 5.x
     "sse-starlette>=3.3.4",
+
+    # examples 依赖模块
+    "langchain>=1.2.15",
+    "langchain-openai>=1.2.1",
     "uvicorn>=0.46.0",
 ]
 
@@ -21,8 +24,7 @@ build-backend = "hatchling.build"
 packages = [
     "src/a2a_common",
     "src/a2a_client",
-    "src/a2a_server",
-    "examples"
+    "src/a2a_server"
 ]
 
 [tool.hatch.build.targets.sdist]

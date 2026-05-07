@@ -1,3 +1,5 @@
+import sys_path
+
 import uvicorn
 from a2a.types import (
     AgentCard,

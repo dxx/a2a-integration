@@ -1,3 +1,5 @@
+import sys_path
+
 import uvicorn
 from langchain.agents import create_agent
 from a2a.types import (
