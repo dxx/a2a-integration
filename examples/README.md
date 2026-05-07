@@ -7,8 +7,8 @@
 
 ```
 examples/
-├── langgraph_agent/      # 核心 LangGraph Agent 实现（被其他示例引用）
-├── send_message/        # 基础消息发送示例
+├── langgraph_agent/    # 核心 LangGraph Agent 实现（被其他示例引用）
+├── send_message/       # 基础消息发送示例
 ├── jsonrpc/            # JSON-RPC over HTTP 协议
 ├── rest/               # HTTP+JSON REST 协议
 ├── grpc/               # gRPC 协议
@@ -34,6 +34,8 @@ examples/
 - 支持流式输出 (`stream`)
 - 支持工具调用 (`read_file`, `write_file`)
 - HITL 模式下可对危险操作进行人工审批
+
+**查看 `langgraph_agent/chat_model.py`, 配置好 `BASE_URL` 和 `API_KEY`**。
 
 
 ### 2. send_message/ - 基础消息发送示例
