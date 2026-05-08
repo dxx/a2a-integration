@@ -19,6 +19,13 @@ examples/
 ```
 
 
+### 同步依赖
+
+```bash
+uv sync --group examples
+```
+
+
 ### 1. langgraph_agent/ - 核心模块
 
 基础模块，提供基于 LangGraph 的 Agent 实现，被其他示例引用。
