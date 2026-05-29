@@ -382,17 +382,3 @@ def _get_path_prefix(url: str) -> str:
     """从 HTTP URL 中提取 path。"""
     parsed = urlparse(url)
     return parsed.path
-
-
-# Monkey-patch json.dumps to disable ASCII escaping for Chinese characters
-# This fixes the issue where SSE responses from a2a-sdk encode Chinese text as \uXXXX
-_original_json_dumps = json.dumps
-
-
-def _json_dumps_with_unicode(*args, **kwargs):
-    if "ensure_ascii" not in kwargs:
-        kwargs["ensure_ascii"] = False
-    return _original_json_dumps(*args, **kwargs)
-
-
-json.dumps = _json_dumps_with_unicode
