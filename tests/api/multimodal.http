@@ -1,0 +1,61 @@
+## 多模态
+
+### 图片
+POST http://localhost:8080/a2a/multimodal
+Content-Type: application/json; charset=utf-8
+A2A-Version: 1.0
+
+{
+    "id": "12113c25-b752-473f-977e-c9ad33cf4f19",
+    "jsonrpc": "2.0",
+    "method": "SendStreamingMessage",
+    "params": {
+        "message": {
+            "contextId": "981968b0-f051-4c7a-abb3-1f5d380effec",
+            "messageId": "120ec73f93024993becf954d03a672bc",
+            "parts": [
+                {
+                    "data": {
+                        "content": {
+                            "blocks": [
+                                {"type": "image_url", "image_url": {"url": "https://img0.baidu.com/it/u=2944321954,3468161118&fm=253&app=138&f=JPEG?w=800&h=1400"}},
+                                {"type": "text", "text": "描述下这个图片"}
+                            ]
+                        }
+                    }
+                }
+            ],
+            "role": "ROLE_USER"
+        }
+    }
+}
+
+### 视频
+POST http://localhost:8080/a2a/multimodal
+Content-Type: application/json; charset=utf-8
+A2A-Version: 1.0
+
+{
+    "id": "12113c25-b752-473f-977e-c9ad33cf4f19",
+    "jsonrpc": "2.0",
+    "method": "SendStreamingMessage",
+    "params": {
+        "message": {
+            "contextId": "981968b0-f051-4c7a-abb3-1f5d380effec",
+            "messageId": "120ec73f93024993becf954d03a672bc",
+            "parts": [
+                {
+                    "data": {
+                        "content": {
+                            "blocks": [
+                                {"type": "video_url", "video_url": {"url": "https://ark-project.tos-cn-beijing.volces.com/doc_video/ark_vlm_video_input.mp4"}},
+                                {"type": "text", "text": "这段视频的内容是什么?"}
+                            ]
+                        }
+                    }
+                }
+            ],
+            "role": "ROLE_USER"
+        }
+    }
+}
