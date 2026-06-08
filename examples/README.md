@@ -1,6 +1,6 @@
 ## 示例
 
-本目录包含 9 个子目录，展示了 A2A (Agent-to-Agent) 协议的各种实现方式。
+本目录包含 10 个子目录，展示了 A2A (Agent-to-Agent) 协议的各种实现方式。
 
 
 ### 目录结构
@@ -14,8 +14,9 @@ examples/
 ├── grpc/               # gRPC 协议
 ├── hitl/               # 人工审批（Human-in-the-Loop）
 ├── extend_agent_card/  # 扩展 Agent Card（公开/私有技能）
-├── multi/              # 多协议同时支持（JSON-RPC + REST）
-└── converter/          # 自定义内容转换器
+├── multi_protocol/     # 多协议同时支持（JSON-RPC + REST）
+├── converter/          # 自定义内容转换器
+└── multimodal/         # 多模态输入示例
 ```
 
 
@@ -32,8 +33,8 @@ uv sync --group examples
 
 | 文件 | 作用 |
 |------|------|
-| `chat_model.py` | 初始化聊天模型，配置火山引擎 API |
-| `agent.py` | 定义两种 Agent：`LangGraphAgent`(返回结构化数据) 和 `SimpleLangGraphAgent`(返回字符串) |
+| `chat_model.py` | 初始化聊天模型，配置模型服务地址和 API Key |
+| `agent.py` | 定义 `LangGraphAgent`、`SimpleLangGraphAgent` 和 `MultimodalAgent` |
 | `agent_hitl.py` | 支持 Human-in-the-Loop (HITL) 人工审批功能的 Agent |
 
 **主要功能**:
@@ -142,15 +143,15 @@ uv run extend_agent_card/client.py
 - 客户端可调用 `get_extended_agent_card()` 获取扩展 Agent Card
 
 
-### 8. multi/ - 多协议示例
+### 8. multi_protocol/ - 多协议示例
 
 展示同时支持 JSON-RPC 和 REST 两种协议的服务端和客户端。
 
 **运行**:
 ```bash
-uv run multi/server.py
-uv run multi/client_rest.py   # REST 客户端
-uv run multi/client_jsonrpc.py  # JSON-RPC 客户端
+uv run multi_protocol/server.py
+uv run multi_protocol/client_rest.py   # REST 客户端
+uv run multi_protocol/client_jsonrpc.py  # JSON-RPC 客户端
 ```
 
 **特点**:
@@ -174,12 +175,28 @@ uv run converter/client.py
 - 提供 `server_hitl.py` 和 `client_hitl.py` 支持 HITL 版本
 
 
+### 10. multimodal/ - 多模态输入示例
+
+演示如何通过 A2A 发送结构化多模态内容，例如图片 URL + 文本提示。
+
+**运行**:
+```bash
+uv run multimodal/server.py
+uv run multimodal/client.py
+```
+
+**主要功能**:
+- 使用 `MultimodalAgent` 处理多模态输入
+- 客户端通过 `content.blocks` 传入 OpenAI 兼容格式的图片和文本内容
+- 服务端通过 `/a2a/multimodal` 端点提供 JSON-RPC 服务
+
+
 ### 共同特点
 
 - 所有服务端都使用 `A2AServerAgent` 作为核心
 - 所有客户端都使用 `A2AClientAgent` 与 Agent 通信
 - 支持流式响应 (streaming)
-- 支持 0.3 和 1.0 双版本协议兼容
+- 部分示例支持 0.3 和 1.0 双版本协议兼容
 
 ### Agent Card 端点
 
