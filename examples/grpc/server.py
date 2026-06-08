@@ -3,7 +3,6 @@ import sys_path
 import uvicorn
 import grpc
 import asyncio
-from langchain.agents import create_agent
 from a2a.types import (
     AgentCard,
     AgentCapabilities,
@@ -14,7 +13,6 @@ from a2a_common import PROTOCOL_GRPC, PROTOCOL_VERSION_1_0, PROTOCOL_VERSION_0_3
 from a2a_server import A2AServerAgent
 from a2a_server.grpc import init_grpc_server, init_compat_grpc_server
 from examples.langgraph_agent.agent import LangGraphAgent
-from examples.langgraph_agent.chat_model import get_chat_model
 
 
 async def run():
@@ -23,10 +21,7 @@ async def run():
     grpc_port = 18080
     compat_grpc_port = 18081
 
-    model = get_chat_model()
-    langchain_agent = create_agent(model=model)
-
-    runnable_agent = LangGraphAgent(langchain_agent)
+    runnable_agent = LangGraphAgent()
 
     skill = AgentSkill(
         id="test",

@@ -1,7 +1,6 @@
 import sys_path
 
 import uvicorn
-from langchain.agents import create_agent
 from a2a.types import (
     AgentCard,
     AgentCapabilities,
@@ -17,10 +16,8 @@ from examples.langgraph_agent.chat_model import get_chat_model
 def run():
     host = "127.0.0.1"
     port = 8080
-    model = get_chat_model()
-    langchain_agent = create_agent(model=model)
 
-    simple_runnable_agent = SimpleLangGraphAgent(langchain_agent)
+    simple_runnable_agent = SimpleLangGraphAgent()
 
     public_skill = AgentSkill(
         id="public_test",

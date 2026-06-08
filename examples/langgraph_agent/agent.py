@@ -1,6 +1,6 @@
 
 from langchain.agents import create_agent
-from langchain_core.runnables import Runnable, RunnableConfig
+from langchain_core.runnables import RunnableConfig
 from langchain_core.messages import HumanMessage, AIMessage, ToolMessage, AIMessageChunk
 from typing import AsyncIterator, Literal
 from dataclasses import dataclass, asdict 
@@ -28,8 +28,11 @@ class AgentData:
 class LangGraphAgent(RunnableAgent):
     """基于 LangGraph 的 Agent 实现。返回 AgentData 类型的数据"""
 
-    def __init__(self, agent: Runnable):
-        self._agent = agent
+    def __init__(self):
+        model = get_chat_model()
+        langchain_agent = create_agent(model=model)
+
+        self._agent = langchain_agent
 
     async def invoke(self, request: AgentRequest, context: RequestContext) -> AgentResponse:
         context_id = request.context_id
@@ -43,7 +46,10 @@ class LangGraphAgent(RunnableAgent):
         config: RunnableConfig = {"configurable": {"thread_id": context_id}}
         inputs = {"messages": [HumanMessage(content=query)]}
 
-        output = await self._agent.ainvoke(inputs, config)
+        output = await self._agent.ainvoke(
+            inputs,  # type: ignore[arg-type]
+            config
+        )
 
         latest_message = output["messages"][-1]
 
@@ -73,7 +79,8 @@ class LangGraphAgent(RunnableAgent):
         inputs = {"messages": [HumanMessage(content=query)]}
 
         async for item in self._agent.astream(
-            inputs, config, stream_mode="values"
+            inputs,  # type: ignore[arg-type]
+            config, stream_mode="values"
         ):
             # 获取最后的消息
             latest_message = item["messages"][-1]
@@ -134,8 +141,11 @@ class LangGraphAgent(RunnableAgent):
 class SimpleLangGraphAgent(RunnableAgent):
     """基于 LangGraph 的 Agent 实现。返回 str 类型的数据"""
 
-    def __init__(self, agent: Runnable):
-        self._agent = agent
+    def __init__(self):
+        model = get_chat_model()
+        langchain_agent = create_agent(model=model)
+
+        self._agent = langchain_agent
 
     async def invoke(self, request: AgentRequest, context: RequestContext) -> AgentResponse:
         context_id = request.context_id
@@ -149,7 +159,10 @@ class SimpleLangGraphAgent(RunnableAgent):
         config: RunnableConfig = {"configurable": {"thread_id": context_id}}
         inputs = {"messages": [HumanMessage(content=query)]}
 
-        output = await self._agent.ainvoke(inputs, config)
+        output = await self._agent.ainvoke(
+            inputs,  # type: ignore[arg-type]
+            config
+        )
 
         message = output["messages"][-1]
 
@@ -173,7 +186,8 @@ class SimpleLangGraphAgent(RunnableAgent):
         inputs = {"messages": [HumanMessage(content=query)]}
 
         async for item in self._agent.astream(
-            inputs, config, stream_mode="values"
+            inputs, # type: ignore[arg-type]
+            config, stream_mode="values"
         ):
             # 获取最后的消息
             latest_message = item["messages"][-1]
