@@ -1,12 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any
-from a2a.types import (
-    Part,
-)
-from a2a.helpers.proto_helpers import (
-    new_text_part,
-    new_data_part,
-)
+from a2a.types import Part
+from a2a.helpers.proto_helpers import new_data_part
 from google.protobuf import json_format
 
 
@@ -27,11 +22,7 @@ class ResponsePartConverter(ABC):
 
     @abstractmethod
     def convert_content(self, content: str | dict[str, Any]) -> list[Part]:
-        """将 AgentResponse 中的 content 转换成 Message 中的 parts。"""
-
-    @abstractmethod
-    def convert_artifact(self, artifact: str | dict[str, Any]) -> list[Part]:
-        """将 AgentResponse 中的 artifact 转换成 Message 中的 parts。"""
+        """将 AgentResponse 中的 content 转换成 Atifact 中的 parts。"""
 
     @abstractmethod
     def convert_interrupt(self, interrupt: dict[str, Any]) -> list[Part]:
@@ -80,28 +71,7 @@ class DefaultResponsePartConverter(ResponsePartConverter):
     """默认的 Message part 响应内容转换器。"""
 
     def convert_content(self, content: str | dict[str, Any]) -> list[Part]:
-        """将 AgentResponse 中的 content 转换成 Message 中的 parts。
-
-        Parts 示例:
-        "parts": [
-          {
-            "data": {
-              "content": {
-                "type": "ai",
-                "text": "收到啦😉，你是有什么问题想要咨询，还是有什么事情想聊聊呀，可以把你的具体需求告诉我哦～",
-                "name": "",
-                "tool_calls": []
-              },
-              "interrupt": null
-            }
-          }
-        ]
-        """
-        data = {"content": content, "interrupt": None}
-        return [new_data_part(data=data)]
-
-    def convert_artifact(self, artifact: str | dict[str, Any]) -> list[Part]:
-        """将 AgentResponse 中的 artifact 转换成 Message 中的 parts。
+        """将 AgentResponse 中的 content 转换成 Atifact 中的 parts。
 
         Atifacts 示例:
         "artifacts": [
@@ -110,17 +80,22 @@ class DefaultResponsePartConverter(ResponsePartConverter):
                 "name": "result",
                 "parts": [
                     {
-                        "text": "Finished"
+                        "data": {
+                        "content": {
+                            "type": "ai",
+                            "text": "收到啦😉，你是有什么问题想要咨询，还是有什么事情想聊聊呀，可以把你的具体需求告诉我哦～",
+                            "name": "",
+                            "tool_calls": []
+                        },
+                        "interrupt": null
+                        }
                     }
                 ]
             }
         ]
         """
-        return (
-            [new_text_part(text=artifact)]
-            if isinstance(artifact, str)
-            else [new_data_part(data=artifact)]
-        )
+        data = {"content": content, "interrupt": None}
+        return [new_data_part(data=data)]
 
     def convert_interrupt(self, interrupt: dict[str, Any]) -> list[Part]:
         """将 AgentResponse 中的 interrupt 转换成 Message 中的 parts。

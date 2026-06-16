@@ -45,25 +45,8 @@ class CustomRequestPartConverter(RequestPartConverter):
 
 class CustomResponsePartConverter(ResponsePartConverter):
 
-    def convert_message_part(self, parts: list[Part]) -> str | dict[str, Any]:
-        """将 Message 中的 parts 转换成 AgentResponse 中的 content。
-
-        Parts 示例:
-        "parts": [
-          {
-            "text": "收到啦😉，你是有什么问题想要咨询，还是有什么事情想聊聊呀，可以把你的具体需求告诉我哦～"
-          }
-        ]
-        """
-
-        texts = _get_text_parts(parts)
-        if len(texts) > 0:
-            return texts[0]
-
-        return ""
-
-    def convert_artifact_part(self, parts: list[Part]) -> str | dict[str, Any]:
-        """将 Message 中的 parts 转换成 AgentResponse 中的 artifact。
+    def convert_atifact_part(self, parts: list[Part]) -> str | dict[str, Any]:
+        """将 Atifact 中的 parts 转换成 AgentResponse 中的 content。
 
         Atifacts 示例:
         "artifacts": [
@@ -72,14 +55,18 @@ class CustomResponsePartConverter(ResponsePartConverter):
                 "name": "result",
                 "parts": [
                     {
-                        "text": "Finished"
+                        "text": "收到啦😉，你是有什么问题想要咨询，还是有什么事情想聊聊呀，可以把你的具体需求告诉我哦～"
                     }
                 ]
             }
         ]
         """
 
-        return _get_part_content(parts)
+        texts = _get_text_parts(parts)
+        if len(texts) > 0:
+            return texts[0]
+
+        return ""
 
     def convert_interrupt_part(self, parts: list[Part]) -> dict[str, Any]:
         """将 Message 中的 parts 转换成 AgentResponse 中的 interrupt。
@@ -125,18 +112,3 @@ def _get_data_parts(parts: list[Part]) -> list[Any]:
         if part.HasField("data"):
             result.append(json_format.MessageToDict(part.data))
     return result
-
-
-def _get_part_content(parts: list[Part]) -> str | dict[str, Any]:
-    if not parts:
-        return ""
-
-    first_part = parts[0]
-
-    if first_part.HasField("text"):
-        return "\n".join(get_text_parts(parts))
-    elif first_part.HasField("data"):
-        # 第一个 data
-        return json_format.MessageToDict(first_part.data)
-
-    return ""

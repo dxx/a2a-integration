@@ -66,9 +66,6 @@ async def main():
                     interrupt = None
                 if item.content:
                     print(f"Agent: {item.content}")
-                if item.artifact:
-                    print(f"Artifact: {item.artifact}")
-
 
 
         await client_agent.close()

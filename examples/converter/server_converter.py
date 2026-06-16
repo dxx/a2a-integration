@@ -52,21 +52,7 @@ class CustomRequestPartConverter(RequestPartConverter):
 class CustomResponsePartConverter(ResponsePartConverter):
 
     def convert_content(self, content: str | dict[str, Any]) -> list[Part]:
-        """将 AgentResponse 中的 content 转换成 Message 中的 parts。
-
-        Parts 示例:
-        "parts": [
-          {
-            "text": "收到啦😉，你是有什么问题想要咨询，还是有什么事情想聊聊呀，可以把你的具体需求告诉我哦～"
-          }
-        ]
-        """
-        if isinstance(content, str):
-            return [new_text_part(text=content)]
-        return [new_text_part(text="")]
-
-    def convert_artifact(self, artifact: str | dict[str, Any]) -> list[Part]:
-        """将 AgentResponse 中的 artifact 转换成 Message 中的 parts。
+        """将 AgentResponse 中的 content 转换成 Atifact 中的 parts。
 
         Atifacts 示例:
         "artifacts": [
@@ -75,18 +61,15 @@ class CustomResponsePartConverter(ResponsePartConverter):
                 "name": "result",
                 "parts": [
                     {
-                        "text": "Finished"
+                        "text": "收到啦😉，你是有什么问题想要咨询，还是有什么事情想聊聊呀，可以把你的具体需求告诉我哦～"
                     }
                 ]
             }
         ]
         """
-
-        return (
-            [new_text_part(text=artifact)]
-            if isinstance(artifact, str)
-            else [new_data_part(data=artifact)]
-        )
+        if isinstance(content, str):
+            return [new_text_part(text=content)]
+        return [new_text_part(text="")]
 
     def convert_interrupt(self, interrupt: dict[str, Any]) -> list[Part]:
         """将 AgentResponse 中的 interrupt 转换成 Message 中的 parts。

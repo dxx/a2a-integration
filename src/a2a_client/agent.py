@@ -67,9 +67,6 @@ class AgentResponse:
     interrupt: dict[str, Any] | None = None
     """中断信息"""
 
-    artifact: str | dict[str, Any] | None = None
-    """人工制作信息"""
-
 
 class A2AClientAgent:
     def __init__(
@@ -192,7 +189,6 @@ class A2AClientAgent:
         if event.HasField("task"):
             task = event.task
             status = task.status
-            latest_message = None
             artifact = None
             if status and status.state == TaskState.TASK_STATE_INPUT_REQUIRED:
                 if status.message:
@@ -205,48 +201,23 @@ class A2AClientAgent:
                         interrupt_id=status.message.task_id,
                         interrupt=interrupt,
                     )
-            if task.history:
-                history = [
-                    history
-                    for history in task.history
-                    if history.role == Role.ROLE_AGENT
-                ]
-                if len(history) > 0:
-                    latest_message = history[-1]
             if task.artifacts:
                 artifact = task.artifacts[-1]
             return AgentResponse(
-                content=self._response_converter.convert_message_part(
-                    list(latest_message.parts)
-                )
-                if latest_message
-                else None,
-                artifact=self._response_converter.convert_artifact_part(
+                content=self._response_converter.convert_atifact_part(
                     list(artifact.parts)
                 )
                 if artifact
                 else None,
             )
-        elif event.HasField("message"):
-            return AgentResponse(
-                content=self._response_converter.convert_message_part(
-                    list(event.message.parts)
-                )
-            )
+
         return AgentResponse(content=None)
     
     def _handle_stream_response(self, event: StreamResponse) -> AgentResponse | None:
         if event.HasField("status_update"):
             update = event.status_update
             state = update.status.state
-            if state == TaskState.TASK_STATE_WORKING:
-                content = None
-                if update.status.message:
-                    content = self._response_converter.convert_message_part(
-                        list(update.status.message.parts)
-                    )
-                return AgentResponse(content=content)
-            elif state == TaskState.TASK_STATE_INPUT_REQUIRED:
+            if state == TaskState.TASK_STATE_INPUT_REQUIRED:
                 interrupt = None
                 if update.status.message:
                     interrupt = self._response_converter.convert_interrupt_part(
@@ -263,19 +234,12 @@ class A2AClientAgent:
                 if update.status.message:
                     msg = get_message_text(update.status.message)
             
-                raise ValueError(f"Agent {self._agent_card.name} task {update.task_id} is faied: {msg}")
+                raise ValueError(f"Agent {self._agent_card.name} task {update.task_id} is failed: {msg}")
         elif event.HasField("artifact_update"):
             artifact = event.artifact_update.artifact
             return AgentResponse(
-                content=None,
-                artifact=self._response_converter.convert_artifact_part(
+                content=self._response_converter.convert_atifact_part(
                     list(artifact.parts)
-                )
-            )
-        elif event.HasField("message"):
-            return AgentResponse(
-                content=self._response_converter.convert_message_part(
-                    list(event.message.parts)
                 )
             )
 

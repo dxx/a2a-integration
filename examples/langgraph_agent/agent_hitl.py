@@ -126,7 +126,6 @@ class HITLLangGraphAgent(RunnableAgent):
             is_complete=True,
             require_input=False,
             content=message.text,
-            artifact="Finished"
         )
 
     async def stream(self, request: AgentRequest, context: RequestContext) -> AsyncIterator[AgentResponse]:
@@ -208,5 +207,4 @@ class HITLLangGraphAgent(RunnableAgent):
             is_complete=True,
             require_input=False,
             content=None,
-            artifact="Finished"
         )

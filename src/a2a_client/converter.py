@@ -3,10 +3,7 @@ from typing import Any
 from a2a.types import (
     Part,
 )
-from a2a.helpers.proto_helpers import (
-    new_data_part,
-    get_text_parts
-)
+from a2a.helpers.proto_helpers import new_data_part
 from google.protobuf import json_format
 
 
@@ -26,12 +23,8 @@ class ResponsePartConverter(ABC):
     """Message part 响应内容转换器。"""
 
     @abstractmethod
-    def convert_message_part(self, parts: list[Part]) -> str | dict[str, Any]:
-        """将 Message 中的 parts 转换成 AgentResponse 中的 content。"""
-
-    @abstractmethod
-    def convert_artifact_part(self, parts: list[Part]) -> str | dict[str, Any]:
-        """将 Message 中的 parts 转换成 AgentResponse 中的 artifact。"""
+    def convert_atifact_part(self, parts: list[Part]) -> str | dict[str, Any]:
+        """将 Atifact 中的 parts 转换成 AgentResponse 中的 content。"""
 
     @abstractmethod
     def convert_interrupt_part(self, parts: list[Part]) -> dict[str, Any]:
@@ -73,33 +66,8 @@ class DefaultRequestPartConverter(RequestPartConverter):
 class DefaultResponsePartConverter(ResponsePartConverter):
     """默认的 Message part 响应内容转换器。"""
 
-    def convert_message_part(self, parts: list[Part]) -> str | dict[str, Any]:
-        """将 Message 中的 parts 转换成 AgentResponse 中的 content。
-        
-        Parts 示例:
-        "parts": [
-          {
-            "data": {
-              "content": {
-                "type": "ai",
-                "text": "收到啦😉，你是有什么问题想要咨询，还是有什么事情想聊聊呀，可以把你的具体需求告诉我哦～",
-                "name": "",
-                "tool_calls": []
-              },
-              "interrupt": null
-            }
-          }
-        ]
-        """
-
-        datas = _get_data_parts(parts)
-        if len(datas) > 0:
-            return datas[0].get("content", "")
-
-        return ""
-
-    def convert_artifact_part(self, parts: list[Part]) -> str | dict[str, Any]:
-        """将 Message 中的 parts 转换成 AgentResponse 中的 artifact。
+    def convert_atifact_part(self, parts: list[Part]) -> str | dict[str, Any]:
+        """将 Atifact 中的 parts 转换成 AgentResponse 中的 content。
 
         Atifacts 示例:
         "artifacts": [
@@ -108,14 +76,26 @@ class DefaultResponsePartConverter(ResponsePartConverter):
                 "name": "result",
                 "parts": [
                     {
-                        "text": "Finished"
+                        "data": {
+                        "content": {
+                            "type": "ai",
+                            "text": "收到啦😉，你是有什么问题想要咨询，还是有什么事情想聊聊呀，可以把你的具体需求告诉我哦～",
+                            "name": "",
+                            "tool_calls": []
+                        },
+                        "interrupt": null
+                        }
                     }
                 ]
             }
         ]
         """
 
-        return _get_part_content(parts)
+        datas = _get_data_parts(parts)
+        if len(datas) > 0:
+            return datas[0].get("content", "")
+
+        return ""
 
     def convert_interrupt_part(self, parts: list[Part]) -> dict[str, Any]:
         """将 Message 中的 parts 转换成 AgentResponse 中的 interrupt。
@@ -155,18 +135,3 @@ def _get_data_parts(parts: list[Part]) -> list[Any]:
         if part.HasField("data"):
             result.append(json_format.MessageToDict(part.data))
     return result
-
-
-def _get_part_content(parts: list[Part]) -> str | dict[str, Any]:
-    if not parts:
-        return ""
-
-    first_part = parts[0]
-
-    if first_part.HasField("text"):
-        return "\n".join(get_text_parts(parts))
-    elif first_part.HasField("data"):
-        # 第一个 data
-        return json_format.MessageToDict(first_part.data)
-
-    return ""

@@ -63,7 +63,6 @@ class LangGraphAgent(RunnableAgent):
             is_complete=True,
             require_input=False,
             content=asdict(data),
-            artifact="Finished"
         )
 
     async def stream(self, request: AgentRequest, context: RequestContext) -> AsyncIterator[AgentResponse]:
@@ -134,7 +133,6 @@ class LangGraphAgent(RunnableAgent):
             is_complete=True,
             require_input=False,
             content=None,
-            artifact="Finished"
         )
 
 
@@ -170,7 +168,6 @@ class SimpleLangGraphAgent(RunnableAgent):
             is_complete=True,
             require_input=False,
             content=message.text,
-            artifact="Finished"
         )
 
     async def stream(self, request: AgentRequest, context: RequestContext) -> AsyncIterator[AgentResponse]:
@@ -230,7 +227,6 @@ class SimpleLangGraphAgent(RunnableAgent):
             is_complete=True,
             require_input=False,
             content=None,
-            artifact="Finished"
         )
 
 
@@ -271,7 +267,6 @@ class MultimodalAgent(RunnableAgent):
             is_complete=True,
             require_input=False,
             content=message.text,
-            artifact="Finished"
         )
 
     async def stream(self, request: AgentRequest, context: RequestContext) -> AsyncIterator[AgentResponse]:
@@ -350,5 +345,4 @@ class MultimodalAgent(RunnableAgent):
             is_complete=True,
             require_input=False,
             content=None,
-            artifact="Finished"
         )

@@ -88,9 +88,6 @@ class AgentResponse:
     interrupt: dict[str, Any] | None = None
     """中断信息"""
 
-    artifact: str | dict[str, Any] | None = None
-    """人工制作信息。当 is_complete=True 时，可选的人工信息"""
-
 
 class RunnableAgent(ABC):
     """Agent 抽象类"""
@@ -168,43 +165,43 @@ class RunnableAgentExecutor(AgentExecutor):
         updater: TaskUpdater,
         context: RequestContext
     ) -> None:
+        # 处理中
+        await updater.start_work(
+            new_text_message(
+                text="working",
+                context_id=task.context_id,
+                task_id=task.id,
+            )
+        )
+
         # 非流式调用
         response = await self._runnable_agent.invoke(request, context)
         is_complete = response.is_complete
         require_input = response.require_input
         content = response.content
-        if is_complete:
-            if content:
-                # 处理中
-                await updater.update_status(
-                    state=TaskState.TASK_STATE_WORKING,
-                    message=new_message(
-                        parts=self._response_converter.convert_content(content),
-                        context_id=task.context_id,
-                        task_id=task.id,
-                    ),
-                )
-            if response.artifact:
-                await updater.add_artifact(
-                    name="result",
-                    parts=self._response_converter.convert_artifact(response.artifact),
-                    last_chunk=True,
-                )
-        elif require_input:
-            message = new_text_message("", task.context_id, task.id)
-            if response.interrupt:
-                message = new_message(
-                    parts=self._response_converter.convert_interrupt(
-                        response.interrupt
-                    ),
-                    context_id=task.context_id,
-                    task_id=task.id,
-                )
+        if require_input:
+            if not response.interrupt:
+                raise ValueError(f"interrupt is required")
+            message = new_message(
+                parts=self._response_converter.convert_interrupt(
+                    response.interrupt
+                ),
+                context_id=task.context_id,
+                task_id=task.id,
+            )
             # 要求输入
             await updater.requires_input(message=message)
             return
-        # 完成
-        await updater.complete()
+        else:
+            if content:
+                await updater.add_artifact(
+                    name="result",
+                    parts=self._response_converter.convert_content(content),
+                    last_chunk=True,
+                )
+        if is_complete:
+            # 完成
+            await updater.complete()
 
     async def _execute_stream(
         self,
@@ -213,44 +210,48 @@ class RunnableAgentExecutor(AgentExecutor):
         updater: TaskUpdater,
         context: RequestContext
     ) -> None:
+        # 处理中
+        await updater.start_work(
+            new_text_message(
+                text="working",
+                context_id=task.context_id,
+                task_id=task.id,
+            )
+        )
+
         # 流式调用
         async for item in self._runnable_agent.stream(request, context):
             is_task_complete = item.is_complete
             require_user_input = item.require_input
             content = item.content
-            if is_task_complete:
-                if item.artifact:
+            if require_user_input:
+                if not item.interrupt:
+                    raise ValueError(f"interrupt is required")
+                message = new_message(
+                    parts=self._response_converter.convert_interrupt(
+                        item.interrupt
+                    ),
+                    context_id=task.context_id,
+                    task_id=task.id,
+                )
+                # 要求输入
+                await updater.requires_input(message=message)
+                break
+            elif is_task_complete:
+                if content:
                     await updater.add_artifact(
-                        name="result",
-                        parts=self._response_converter.convert_artifact(item.artifact),
+                        name="chunk",
+                        parts=self._response_converter.convert_content(content),
                         last_chunk=True,
                     )
                 # 完成
                 await updater.complete()
-                break
-            elif require_user_input:
-                message = new_text_message("", task.context_id, task.id)
-                if item.interrupt:
-                    message = new_message(
-                        parts=self._response_converter.convert_interrupt(
-                            item.interrupt
-                        ),
-                        context_id=task.context_id,
-                        task_id=task.id,
-                    )
-                # 要求输入
-                await updater.requires_input(message=message)
-                break
             else:
                 if content:
-                    # 处理中
-                    await updater.update_status(
-                        state=TaskState.TASK_STATE_WORKING,
-                        message=new_message(
-                            parts=self._response_converter.convert_content(content),
-                            context_id=task.context_id,
-                            task_id=task.id,
-                        ),
+                    await updater.add_artifact(
+                        name="chunk",
+                        parts=self._response_converter.convert_content(content),
+                        last_chunk=False,
                     )
     
     def _create_request(self, message: Message) -> AgentRequest:
