@@ -91,6 +91,7 @@ class TestRunnableAgentExecutor:
     @pytest.fixture
     def mock_updater(self, mocker: MockerFixture) -> MagicMock:
         updater = mocker.MagicMock(spec=TaskUpdater)
+        updater.start_work = mocker.AsyncMock()
         updater.update_status = mocker.AsyncMock()
         updater.add_artifact = mocker.AsyncMock()
         updater.complete = mocker.AsyncMock()
@@ -136,7 +137,8 @@ class TestRunnableAgentExecutor:
         assert req.context_id == "ctx-1"
         assert req.content == "hello"
 
-        mock_updater.update_status.assert_called_once()
+        mock_updater.start_work.assert_called_once()
+        mock_updater.add_artifact.assert_called_once()
         mock_updater.complete.assert_called_once()
 
     # execute - invoke with artifact
@@ -151,7 +153,7 @@ class TestRunnableAgentExecutor:
     ) -> None:
         agent = EchoAgent(
             responses=[
-                AgentResponse(content="done", is_complete=True, artifact="result")
+                AgentResponse(content="done", is_complete=True)
             ]
         )
         executor = RunnableAgentExecutor(agent=agent)
@@ -221,9 +223,11 @@ class TestRunnableAgentExecutor:
 
         await executor.execute(a2a_ctx, event_queue)
 
-        mock_updater.requires_input.assert_called_once()
-        call_args = mock_updater.requires_input.call_args
-        assert call_args.kwargs["message"] is not None
+        mock_updater.requires_input.assert_not_called()
+        mock_updater.update_status.assert_called_once()
+        call_args = mock_updater.update_status.call_args
+        assert call_args.kwargs["state"] == TaskState.TASK_STATE_FAILED
+        assert "interrupt is required" in str(call_args.kwargs["message"])
 
     # execute - stream complete
     @pytest.mark.asyncio
@@ -252,7 +256,8 @@ class TestRunnableAgentExecutor:
         await executor.execute(a2a_ctx, event_queue)
 
         assert len(agent.stream_calls) == 1
-        mock_updater.update_status.assert_called()
+        mock_updater.start_work.assert_called_once()
+        assert mock_updater.add_artifact.call_count == 3
         mock_updater.complete.assert_called_once()
 
     # execute - stream require_input
@@ -288,9 +293,9 @@ class TestRunnableAgentExecutor:
         mock_updater.requires_input.assert_called_once()
         mock_updater.complete.assert_not_called()
 
-    # execute - task is none raises InvalidParamsError
+    # execute - message is none raises InvalidParamsError
     @pytest.mark.asyncio
-    async def test_execute_task_none_raises(
+    async def test_execute_message_none_raises(
         self,
         mocker: MockerFixture,
         event_queue: EventQueueSource,
@@ -301,7 +306,7 @@ class TestRunnableAgentExecutor:
 
         a2a_ctx = _make_a2a_context(mocker, task=None, message=None)
 
-        with pytest.raises(InvalidParamsError, match="Task is none"):
+        with pytest.raises(InvalidParamsError, match="Message is empty"):
             await executor.execute(a2a_ctx, event_queue)
 
     # execute - exception handling

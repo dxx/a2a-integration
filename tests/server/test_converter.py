@@ -127,21 +127,6 @@ class TestDefaultResponsePartConverter:
             "data": {"content": content, "interrupt": None}
         }
 
-    def test_convert_artifact_with_string(
-        self, converter: DefaultResponsePartConverter
-    ) -> None:
-        result = converter.convert_artifact("Finished")
-        assert len(result) == 1
-        assert json_format.MessageToDict(result[0]) == {"text": "Finished"}
-
-    def test_convert_artifact_with_dict(
-        self, converter: DefaultResponsePartConverter
-    ) -> None:
-        artifact = {"key": "value"}
-        result = converter.convert_artifact(artifact)
-        assert len(result) == 1
-        assert json_format.MessageToDict(result[0]) == {"data": artifact}
-
     def test_convert_interrupt(self, converter: DefaultResponsePartConverter) -> None:
         interrupt = {"action_requests": [{"name": "write_file", "args": "hello"}]}
         result = converter.convert_interrupt(interrupt)

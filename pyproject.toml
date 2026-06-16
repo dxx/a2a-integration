@@ -36,3 +36,6 @@ examples = [
     "langchain-openai>=1.2.1",
     "uvicorn>=0.46.0",
 ]
+
+[tool.pytest.ini_options]
+addopts = ["--import-mode=importlib"]

@@ -62,67 +62,38 @@ class TestDefaultResponsePartConverter:
     def converter(self) -> DefaultResponsePartConverter:
         return DefaultResponsePartConverter()
 
-    # convert_message_part
-    def test_convert_message_part_empty_list(
+    # convert_atifact_part
+    def test_convert_atifact_part_empty_list(
         self, converter: DefaultResponsePartConverter
     ) -> None:
-        assert converter.convert_message_part([]) == ""
+        assert converter.convert_atifact_part([]) == ""
 
-    def test_convert_message_part_no_data(
+    def test_convert_atifact_part_no_data(
         self, converter: DefaultResponsePartConverter
     ) -> None:
         parts = [_make_text_part("hello")]
-        assert converter.convert_message_part(parts) == ""
+        assert converter.convert_atifact_part(parts) == ""
 
-    def test_convert_message_part_with_content(
+    def test_convert_atifact_part_with_content(
         self, converter: DefaultResponsePartConverter
     ) -> None:
         parts = [_make_data_part({"content": "hello world"})]
-        assert converter.convert_message_part(parts) == "hello world"
+        assert converter.convert_atifact_part(parts) == "hello world"
 
-    def test_convert_message_part_without_content(
+    def test_convert_atifact_part_without_content(
         self, converter: DefaultResponsePartConverter
     ) -> None:
         parts = [_make_data_part({"other": "field"})]
-        assert converter.convert_message_part(parts) == ""
+        assert converter.convert_atifact_part(parts) == ""
 
-    def test_convert_message_part_multiple_data(
+    def test_convert_atifact_part_multiple_data(
         self, converter: DefaultResponsePartConverter
     ) -> None:
         parts = [
             _make_data_part({"content": "first"}),
             _make_data_part({"content": "second"}),
         ]
-        assert converter.convert_message_part(parts) == "first"
-
-    # convert_artifact_part
-    def test_convert_artifact_part_empty_list(
-        self, converter: DefaultResponsePartConverter
-    ) -> None:
-        assert converter.convert_artifact_part([]) == ""
-
-    def test_convert_artifact_part_with_text(
-        self, converter: DefaultResponsePartConverter
-    ) -> None:
-        parts = [_make_text_part("hello"), _make_text_part("world")]
-        assert converter.convert_artifact_part(parts) == "hello\nworld"
-
-    def test_convert_artifact_part_with_data(
-        self, converter: DefaultResponsePartConverter
-    ) -> None:
-        parts = [
-            _make_data_part({"key": "value"}),
-            _make_data_part({"other": "data"}),
-        ]
-        result = converter.convert_artifact_part(parts)
-        assert result == {"key": "value"}
-
-    def test_convert_artifact_part_with_other(
-        self, converter: DefaultResponsePartConverter
-    ) -> None:
-        part = Part()
-        part.url = "http://example.com"
-        assert converter.convert_artifact_part([part]) == ""
+        assert converter.convert_atifact_part(parts) == "first"
 
     # convert_interrupt_part
     def test_convert_interrupt_part_empty_list(
