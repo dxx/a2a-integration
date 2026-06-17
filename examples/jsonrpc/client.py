@@ -25,7 +25,7 @@ async def main():
             # header 头
             header_parameters={"header-key1": "header-value1"}
         )
-        async for item in client_agent.send_message_streaming(request, request_context):
+        async for item in client_agent.send_streaming_message(request, request_context):
             print(item)
 
 

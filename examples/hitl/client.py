@@ -43,7 +43,7 @@ async def main():
                         }
                     }
 
-            async for item in client_agent.send_message_streaming(request):
+            async for item in client_agent.send_streaming_message(request):
                 print(item)
                 
                 if item.require_input:

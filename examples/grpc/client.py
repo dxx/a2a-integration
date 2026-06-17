@@ -23,7 +23,7 @@ async def main():
 
         request = AgentRequest(content="你好啊", context_id="user_id")
 
-        async for item in client_agent.send_message_streaming(request):
+        async for item in client_agent.send_streaming_message(request):
             print(item)
 
         await client_agent.close()
