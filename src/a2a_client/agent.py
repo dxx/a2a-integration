@@ -161,7 +161,7 @@ class A2AClientAgent:
 
         return self._hand_response(event)
 
-    async def send_message_streaming(
+    async def send_streaming_message(
         self,
         request: AgentRequest,
         context: RequestContext | None = None
