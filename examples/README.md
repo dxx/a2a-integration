@@ -16,7 +16,9 @@ examples/
 ├── extend_agent_card/  # 扩展 Agent Card（公开/私有技能）
 ├── multi_protocol/     # 多协议同时支持（JSON-RPC + REST）
 ├── converter/          # 自定义内容转换器
-└── multimodal/         # 多模态输入示例
+├── multimodal/         # 多模态输入示例
+├── crewai_agent/       # CrewAI Agent 实现，发消息示例
+└── pydanticai_agent/   # PydanticAI Agent 实现，发消息示例
 ```
 
 
