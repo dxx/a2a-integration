@@ -35,6 +35,8 @@ examples = [
     "langchain>=1.2.15",
     "langchain-openai>=1.2.1",
     "uvicorn>=0.46.0",
+    "pydantic-ai>=1.0.0,<1.36.0",
+    "crewai>=1.14.7",
 ]
 
 [tool.pytest.ini_options]
