@@ -19,7 +19,7 @@ async def main():
         result = await client_agent.send_message(request)
         print(f"响应消息: {result}")
 
-        request = AgentRequest(content="你好啊", context_id="user_id")
+        request = AgentRequest(content="当前时间", context_id="user_id")
 
         async for item in client_agent.send_streaming_message(request):
             print(f"流式响应消息: {item}")

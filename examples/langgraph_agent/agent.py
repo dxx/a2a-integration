@@ -1,7 +1,9 @@
 
+from datetime import datetime
 from langchain.agents import create_agent
 from langchain_core.runnables import RunnableConfig
 from langchain_core.messages import HumanMessage, AIMessage, ToolMessage, AIMessageChunk
+from langchain_core.tools import tool
 from typing import AsyncIterator, Literal
 from dataclasses import dataclass, asdict 
 
@@ -30,7 +32,16 @@ class LangGraphAgent(RunnableAgent):
 
     def __init__(self):
         model = get_chat_model()
-        langchain_agent = create_agent(model=model)
+
+        @tool
+        async def get_current_time() -> str:
+            """获取当前本地时间。"""
+            return datetime.now().astimezone().isoformat(timespec="seconds")
+        
+        langchain_agent = create_agent(
+            model=model,
+            tools=[get_current_time]
+        )
 
         self._agent = langchain_agent
 
@@ -141,7 +152,16 @@ class SimpleLangGraphAgent(RunnableAgent):
 
     def __init__(self):
         model = get_chat_model()
-        langchain_agent = create_agent(model=model)
+        
+        @tool
+        async def get_current_time() -> str:
+            """获取当前本地时间。"""
+            return datetime.now().astimezone().isoformat(timespec="seconds")
+        
+        langchain_agent = create_agent(
+            model=model,
+            tools=[get_current_time]
+        )
 
         self._agent = langchain_agent
 
