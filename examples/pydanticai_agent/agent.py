@@ -126,7 +126,7 @@ class PydanticAIAgent(RunnableAgent):
                 return None
 
         if isinstance(event, FunctionToolCallEvent):
-            return f"Calling tools {event.part.tool_name}"
+            return f"Calling tool {event.part.tool_name}"
 
         if isinstance(event, FunctionToolResultEvent):
             tool_name = getattr(event.result, "tool_name", None) or "unknown"

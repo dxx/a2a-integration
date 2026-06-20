@@ -9,7 +9,10 @@ from crewai.tools import tool
 from crewai.state.checkpoint_config import CheckpointConfig
 from crewai.events.event_bus import crewai_event_bus
 from crewai.events.types.llm_events import LLMStreamChunkEvent, LLMThinkingChunkEvent
-from crewai.events.types.tool_usage_events import ToolUsageFinishedEvent
+from crewai.events.types.tool_usage_events import (
+    ToolUsageFinishedEvent,
+    ToolUsageStartedEvent,
+)
 
 from a2a_server import AgentRequest, AgentResponse, RequestContext, RunnableAgent
 
@@ -124,6 +127,7 @@ class CrewAIAgent(RunnableAgent):
             on_events=[
                 "llm_stream_chunk",
                 "llm_thinking_chunk",
+                "tool_usage_started",
                 "tool_usage_finished",
             ],
             max_checkpoints=20,
@@ -163,8 +167,13 @@ class CrewAIAgent(RunnableAgent):
         def on_llm_stream(_source: Any, event: LLMStreamChunkEvent) -> None:
             if event.chunk:
                 queue.put_nowait(event.chunk)
-            if event.tool_call:
-                queue.put_nowait(self._tool_call_to_text(event.tool_call))
+
+        @crewai_event_bus.on(ToolUsageStartedEvent)
+        def on_tool_started(
+            source: Any, _event: ToolUsageStartedEvent
+        ) -> None:
+            tool_name = self._source_name(source)
+            queue.put_nowait(f"Calling tool {tool_name}")
 
         @crewai_event_bus.on(ToolUsageFinishedEvent)
         def on_tool_finished(
@@ -172,12 +181,6 @@ class CrewAIAgent(RunnableAgent):
         ) -> None:
             tool_name = self._source_name(source)
             queue.put_nowait(f"Tool {tool_name} response {event.output}")
-
-    def _tool_call_to_text(self, tool_call: Any) -> str:
-        function = getattr(tool_call, "function", None)
-        name = getattr(function, "name", None) or "unknown"
-
-        return f"Calling tools {name}"
 
     def _source_name(self, source: Any) -> str:
         return (
