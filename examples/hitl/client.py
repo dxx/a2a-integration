@@ -7,7 +7,6 @@ from a2a_client import A2AClientAgent, AgentRequest
 
 async def main():
     agent_url = "http://127.0.0.1:8080"
-    agent_card = None
 
     async with httpx.AsyncClient(timeout=30) as client:
         resolver = A2ACardResolver(client, base_url=agent_url)
