@@ -50,7 +50,7 @@ src/
 **核心方法**:
 | 方法 | 说明 |
 |------|------|
-| `init_server_app()` | 初始化 Starlette HTTP 应用 |
+| `attach_app_server(app)` | 将 A2A 路由附加到已有的 Starlette / FastAPI 应用 |
 | `request_handler()` | 获取请求处理器 |
 
 **核心抽象**:
