@@ -12,8 +12,7 @@ name = "a2a-integration"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "a2a-sdk" },
-    { name = "sse-starlette" },
+    { name = "a2a-sdk", extra = ["http-server"] },
 ]
 
 [package.dev-dependencies]
@@ -25,6 +24,7 @@ dev = [
 examples = [
     { name = "a2a-sdk", extra = ["grpc"] },
     { name = "crewai" },
+    { name = "fastapi" },
     { name = "langchain" },
     { name = "langchain-openai" },
     { name = "pydantic-ai" },
@@ -32,10 +32,7 @@ examples = [
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "a2a-sdk", specifier = ">=1.1.0" },
-    { name = "sse-starlette", specifier = ">=3.3.4" },
-]
+requires-dist = [{ name = "a2a-sdk", extras = ["http-server"], specifier = ">=1.1.5" }]
 
 [package.metadata.requires-dev]
 dev = [
@@ -44,8 +41,9 @@ dev = [
     { name = "pytest-mock", specifier = ">=3.15.1" },
 ]
 examples = [
-    { name = "a2a-sdk", extras = ["grpc"], specifier = ">=1.1.0" },
+    { name = "a2a-sdk", extras = ["grpc"], specifier = ">=1.1.5" },
     { name = "crewai", specifier = ">=1.14.7" },
+    { name = "fastapi", specifier = ">=0.115.2" },
     { name = "langchain", specifier = ">=1.2.15" },
     { name = "langchain-openai", specifier = ">=1.2.1" },
     { name = "pydantic-ai", specifier = ">=1.0.0,<1.36.0" },
@@ -54,30 +52,32 @@ examples = [
 
 [[package]]
 name = "a2a-sdk"
-version = "1.1.0"
+version = "1.2.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "culsans", marker = "python_full_version < '3.13'" },
     { name = "google-api-core" },
     { name = "googleapis-common-protos" },
     { name = "httpx" },
-    { name = "httpx-sse" },
     { name = "json-rpc" },
     { name = "packaging" },
     { name = "protobuf" },
     { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c7/7e/8ac10bbf8b15b16574355f39b17dbdf617a282c27b41c7ff2116e30336df/a2a_sdk-1.1.0.tar.gz", hash = "sha256:e8102dad1b36709dbdc3d19319e38e6dfa3b3a79c30416030eb2d482576be204", size = 375726, upload-time = "2026-05-29T09:34:43.015Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e7/5a/2b5ff74f3f0dbec13787c7139cb1047a562544c9b8b062d0eaa9392c79f9/a2a_sdk-1.2.3.tar.gz", hash = "sha256:a28bc40b010d088ea4a10d05a5ba021d183f02cacab15929072ea5b34cde3fe6", size = 434137, upload-time = "2026-10-19T10:11:31.052Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d4/ea/3a5b160cfd51c67759b08748051094d9365ceff18127633d0021950c9860/a2a_sdk-1.1.0-py3-none-any.whl", hash = "sha256:d7f5846caf18033d8bf3108b11ec827dd8dd32f867c98848ede0e39474be93be", size = 241886, upload-time = "2026-05-29T09:34:41.484Z" },
+    { url = "https://files.pythonhosted.org/packages/7b/df/138f64f3138db7b44b9798426909357d27429c868715af8751ace6083238/a2a_sdk-1.2.3-py3-none-any.whl", hash = "sha256:a89529ab7d026900170aefc1515f35c68d9a14b6a9133f8cc775c8fe598f8ae7", size = 278339, upload-time = "2026-10-19T10:11:29.102Z" },
 ]
 
 [package.optional-dependencies]
 grpc = [
     { name = "grpcio" },
     { name = "grpcio-reflection" },
-    { name = "grpcio-status" },
     { name = "grpcio-tools" },
+]
+http-server = [
+    { name = "sse-starlette" },
+    { name = "starlette" },
 ]
 
 [[package]]
@@ -1001,6 +1001,22 @@ wheels = [
 ]
 
 [[package]]
+name = "fastapi"
+version = "0.141.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "annotated-doc" },
+    { name = "pydantic" },
+    { name = "starlette" },
+    { name = "typing-extensions" },
+    { name = "typing-inspection" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/8a/02/91e3416a8fdd715abb903a952a6bec7cdd8d14eed55d415fc8595524c319/fastapi-0.141.1.tar.gz", hash = "sha256:e8822fc40db1e1858054d7a949a888695bc9bdce70139178e33bd2871a453ca1", size = 425799, upload-time = "2026-07-29T17:18:05.568Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/cb/03/10388a42375ee7e4ac9b94eb2c5c569c8b5795e377e701c9ac3ad63de890/fastapi-0.141.1-py3-none-any.whl", hash = "sha256:bfb91aa2d334c61cb35ba9a116fc123b3d3df31640b801cf57a7a78ec3f603b3", size = 131954, upload-time = "2026-07-29T17:18:04.364Z" },
+]
+
+[[package]]
 name = "fastavro"
 version = "1.12.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1399,20 +1415,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/41/14/4e5f8e902fa9461abae292773b921a578f68333c7c3e731bcff7514f78cd/grpcio_reflection-1.71.2.tar.gz", hash = "sha256:bedfac3d2095d6c066b16b66bfce85b4be3e92dc9f3b7121e6f019d24a9c09c0", size = 18798, upload-time = "2025-06-28T04:24:06.019Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a3/89/c99ff79b90315cf47dbcdd86babb637764e5f14f523d622020bfee57dc4d/grpcio_reflection-1.71.2-py3-none-any.whl", hash = "sha256:c4f1a0959acb94ec9e1369bb7dab827cc9a6efcc448bdb10436246c8e52e2f57", size = 22684, upload-time = "2025-06-28T04:23:44.759Z" },
-]
-
-[[package]]
-name = "grpcio-status"
-version = "1.71.2"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "googleapis-common-protos" },
-    { name = "grpcio" },
-    { name = "protobuf" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/fd/d1/b6e9877fedae3add1afdeae1f89d1927d296da9cf977eca0eb08fb8a460e/grpcio_status-1.71.2.tar.gz", hash = "sha256:c7a97e176df71cdc2c179cd1847d7fc86cca5832ad12e9798d7fed6b7a1aab50", size = 13677, upload-time = "2025-06-28T04:24:05.426Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/67/58/317b0134129b556a93a3b0afe00ee675b5657f0155509e22fcb853bafe2d/grpcio_status-1.71.2-py3-none-any.whl", hash = "sha256:803c98cb6a8b7dc6dbb785b1111aed739f241ab5e9da0bba96888aa74704cfd3", size = 14424, upload-time = "2025-06-28T04:23:42.136Z" },
 ]
 
 [[package]]

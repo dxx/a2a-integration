@@ -12,6 +12,7 @@ from a2a_server.agent import (
     RunnableAgent,
 )
 from a2a_common.constants import PROTOCOL_JSON_RPC, PROTOCOL_HTTP_JSON, PROTOCOL_GRPC
+from fastapi import FastAPI
 
 
 def _make_agent_card(**kwargs) -> AgentCard:
@@ -69,12 +70,25 @@ class TestA2AServerAgent:
         assert handler is not None
         assert isinstance(agent._request_handler, RequestHandler)
 
-    def test_init_server_app_returns_starlette(
+    def test_attach_app_server_starlette(
         self, mock_agent: MagicMock, agent_card_jsonrpc: AgentCard
     ) -> None:
         agent = A2AServerAgent(agent=mock_agent, agent_card=agent_card_jsonrpc)
-        app = agent.init_server_app()
+        app = Starlette()
+        agent.attach_app_server(app)
         assert isinstance(app, Starlette)
+        assert len(app.routes) > 0
+
+    def test_attach_app_server_fastapi(
+        self, mock_agent: MagicMock, agent_card_jsonrpc: AgentCard
+    ) -> None:
+        agent = A2AServerAgent(agent=mock_agent, agent_card=agent_card_jsonrpc)
+        app = FastAPI()
+        agent.attach_app_server(app)
+        assert isinstance(app, FastAPI)
+        assert len(app.routes) > 0
+        # A2A 路由以 Starlette Route 注册
+        assert app.openapi()["paths"] == {}
 
     def test_create_http_routers_jsonrpc(
         self,
@@ -87,7 +101,7 @@ class TestA2AServerAgent:
         mocker.patch("a2a_server.agent.create_agent_card_routes", return_value=[])
 
         agent = A2AServerAgent(agent=mock_agent, agent_card=agent_card_jsonrpc)
-        agent.init_server_app()
+        agent.attach_app_server(Starlette())
 
         mock_create_jsonrpc.assert_called_once()
         call_kwargs = mock_create_jsonrpc.call_args.kwargs
@@ -102,7 +116,7 @@ class TestA2AServerAgent:
         mocker.patch("a2a_server.agent.create_agent_card_routes", return_value=[])
 
         agent = A2AServerAgent(agent=mock_agent, agent_card=agent_card_http)
-        agent.init_server_app()
+        agent.attach_app_server(Starlette())
 
         mock_create_rest.assert_called_once()
         call_kwargs = mock_create_rest.call_args.kwargs
@@ -126,7 +140,7 @@ class TestA2AServerAgent:
         )
 
         agent = A2AServerAgent(agent=mock_agent, agent_card=card)
-        agent.init_server_app()
+        agent.attach_app_server(Starlette())
 
         mock_create_jsonrpc.assert_not_called()
         mock_create_rest.assert_not_called()
@@ -152,7 +166,7 @@ class TestA2AServerAgent:
         )
 
         agent = A2AServerAgent(agent=mock_agent, agent_card=card)
-        agent.init_server_app()
+        agent.attach_app_server(Starlette())
 
         mock_create_jsonrpc.assert_called_once()
 
@@ -168,7 +182,7 @@ class TestA2AServerAgent:
         )
 
         agent = A2AServerAgent(agent=mock_agent, agent_card=agent_card_multi)
-        agent.init_server_app()
+        agent.attach_app_server(Starlette())
 
         mock_create_jsonrpc.assert_called_once()
         mock_create_rest.assert_called_once()
@@ -179,7 +193,7 @@ class TestA2AServerAgent:
         card = _make_agent_card(interfaces=[])
         agent = A2AServerAgent(agent=mock_agent, agent_card=card)
         with pytest.raises(Exception):
-            agent.init_server_app()
+            agent.attach_app_server(Starlette())
 
     def test_extended_agent_card_passed(
         self,
@@ -209,7 +223,8 @@ class TestA2AServerAgent:
             agent_card=agent_card_jsonrpc,
         )
 
-        app = agent.init_server_app()
+        app = Starlette()
+        agent.attach_app_server(app)
         client = TestClient(app)
         response = client.get("/.well-known/agent-card.json")
         assert response.status_code == 200

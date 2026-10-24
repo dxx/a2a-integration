@@ -32,7 +32,6 @@ from a2a.helpers.proto_helpers import (
 )
 from a2a.server.tasks import TaskUpdater
 from urllib.parse import urlparse
-import json
 import logging
 
 from a2a_server.converter import (
@@ -290,13 +289,17 @@ class A2AServerAgent:
         self._agent_executor = self._create_agent_executor()
         self._request_handler = self._create_request_handler()
 
-    def init_server_app(self) -> Starlette:
-        """初始化 HTTP 服务的 App"""
+    def attach_app_server(self, app: Starlette):
+        """将 A2A 的相关路由附加到 App 中
 
-        routers = self._create_http_routers()
-        app = Starlette(routes=routers)
+        路由以 Starlette Route 的形式注册，支持 FastAPI。
+        """
 
-        return app
+        agent_card_routes = create_agent_card_routes(self._agent_card)
+        protocol_routers = self._extra_http_routers()
+
+        app.routes.extend(agent_card_routes)
+        app.routes.extend(self._flatten_routers(protocol_routers))
 
     def request_handler(self) -> RequestHandler:
         if not self._request_handler:
@@ -328,14 +331,29 @@ class A2AServerAgent:
     def _create_http_routers(self) -> list[BaseRoute]:
         """创建 HTTP 服务路由"""
 
+        routers: list[BaseRoute] = []
+        routers.extend(create_agent_card_routes(self._agent_card))
+        routers.extend(self._flatten_routers(self._extra_http_routers()))
+
+        return routers
+
+    def _extra_http_routers(self) -> dict[str, list[BaseRoute]]:
+        """按协议分组创建 HTTP 服务路由
+
+        返回的字典以协议为键:
+        - PROTOCOL_JSON_RPC: JSON-RPC 协议的路由
+        - PROTOCOL_HTTP_JSON: HTTP+JSON 协议的路由
+        """
+
         supported_interfaces = self._agent_card.supported_interfaces
 
         if not supported_interfaces and len(supported_interfaces) <= 0:
             raise InvalidParamsError("AgentCard's supported_interfaces is empty")
 
-        routers = []
-
-        routers.extend(create_agent_card_routes(self._agent_card))
+        routers: dict[str, list[BaseRoute]] = {
+            PROTOCOL_JSON_RPC: [],
+            PROTOCOL_HTTP_JSON: [],
+        }
 
         added_protocol: dict[str, list[str]] = {}
 
@@ -346,21 +364,25 @@ class A2AServerAgent:
                 # GRPC 协议使用 grpc 模块中的 init_grpc_server 初始化
                 continue
 
+            if protocol not in routers:
+                logger.warning(f"Unsupported protocol binding: {protocol}")
+                continue
+
             path_prefix = _get_path_prefix(interface.url)
 
             if protocol in added_protocol and path_prefix in added_protocol[protocol]:
                 continue
 
             if protocol == PROTOCOL_JSON_RPC:
-                routers.extend(
+                routers[PROTOCOL_JSON_RPC].extend(
                     create_jsonrpc_routes(
                         request_handler=self._request_handler,
                         rpc_url=path_prefix or "/",
                         enable_v0_3_compat=self._enable_v0_3_compat,
                     )
                 )
-            elif protocol == PROTOCOL_HTTP_JSON:
-                routers.extend(
+            else:
+                routers[PROTOCOL_HTTP_JSON].extend(
                     create_rest_routes(
                         request_handler=self._request_handler,
                         path_prefix=path_prefix,
@@ -368,13 +390,21 @@ class A2AServerAgent:
                         context_builder=HTTPRestStreamingAwareContextBuilder(),
                     )
                 )
-            else:
-                logger.warning(f"Unsupported protocol binding: {protocol}")
 
             prefixs = added_protocol.get(protocol, [])
             if len(prefixs) == 0:
                 added_protocol[protocol] = prefixs
             prefixs.append(path_prefix)
+
+        return routers
+
+    @staticmethod
+    def _flatten_routers(protocol_routers: dict[str, list[BaseRoute]]) -> list[BaseRoute]:
+        """将按协议分组的路由拍平为路由列表"""
+
+        routers: list[BaseRoute] = []
+        for routes in protocol_routers.values():
+            routers.extend(routes)
 
         return routers
 
