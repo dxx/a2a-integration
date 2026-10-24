@@ -11,6 +11,7 @@ from a2a_common import PROTOCOL_JSON_RPC, PROTOCOL_VERSION_1_0
 from a2a_server import A2AServerAgent
 from examples.langgraph_agent.agent import SimpleLangGraphAgent
 from examples.langgraph_agent.chat_model import get_chat_model
+from fastapi import FastAPI
 
 
 def run():
@@ -85,7 +86,9 @@ def run():
         extended_agent_card=extended_agent_card,
     )
 
-    app = server_agent.init_server_app()
+    app = FastAPI()
+
+    server_agent.attach_app_server(app)
 
     uvicorn.run(
         app,

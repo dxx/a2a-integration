@@ -13,6 +13,7 @@ from a2a_common import PROTOCOL_GRPC, PROTOCOL_VERSION_1_0, PROTOCOL_VERSION_0_3
 from a2a_server import A2AServerAgent
 from a2a_server.grpc import init_grpc_server, init_compat_grpc_server
 from examples.langgraph_agent.agent import LangGraphAgent
+from fastapi import FastAPI
 
 
 async def run():
@@ -63,7 +64,9 @@ async def run():
         enable_http_v0_3_compat=True,  # 开启 0.3 版本兼容
     )
 
-    server_app = server_agent.init_server_app()
+    app = FastAPI()
+
+    server_agent.attach_app_server(app)
 
     handler = server_agent.request_handler()
 
@@ -78,7 +81,7 @@ async def run():
 
     init_compat_grpc_server(compat_grpc_server, handler)
 
-    config = uvicorn.Config(server_app, host=host, port=port)
+    config = uvicorn.Config(app, host=host, port=port)
     uvicorn_server = uvicorn.Server(config)
 
     try:

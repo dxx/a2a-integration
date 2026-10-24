@@ -10,6 +10,7 @@ from a2a.types import (
 from a2a_common import PROTOCOL_JSON_RPC, PROTOCOL_VERSION_1_0, PROTOCOL_VERSION_0_3
 from a2a_server import A2AServerAgent
 from examples.langgraph_agent.agent_hitl import HITLLangGraphAgent
+from fastapi import FastAPI
 
 
 def run():
@@ -51,7 +52,9 @@ def run():
         agent_card=agent_card,
     )
 
-    app = server_agent.init_server_app()
+    app = FastAPI()
+
+    server_agent.attach_app_server(app)
 
     uvicorn.run(
         app,
