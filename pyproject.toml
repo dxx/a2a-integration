@@ -1,6 +1,6 @@
 [project]
 name = "a2a-integration"
-version = "0.1.0"
+version = "0.1.1"
 description = "Implementation of A2A (Agent to Agent) protocol integration based on a2a-sdk"
 readme = "README.md"
 requires-python = ">=3.12"
