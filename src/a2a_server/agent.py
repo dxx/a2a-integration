@@ -296,7 +296,7 @@ class A2AServerAgent:
         """
 
         agent_card_routes = create_agent_card_routes(self._agent_card)
-        protocol_routers = self._extra_http_routers()
+        protocol_routers = self._create_http_routers()
 
         app.routes.extend(agent_card_routes)
         app.routes.extend(self._flatten_routers(protocol_routers))
@@ -328,16 +328,8 @@ class A2AServerAgent:
             extended_agent_card=self._extended_agent_card,
         )
 
-    def _create_http_routers(self) -> list[BaseRoute]:
-        """创建 HTTP 服务路由"""
 
-        routers: list[BaseRoute] = []
-        routers.extend(create_agent_card_routes(self._agent_card))
-        routers.extend(self._flatten_routers(self._extra_http_routers()))
-
-        return routers
-
-    def _extra_http_routers(self) -> dict[str, list[BaseRoute]]:
+    def _create_http_routers(self) -> dict[str, list[BaseRoute]]:
         """按协议分组创建 HTTP 服务路由
 
         返回的字典以协议为键:
