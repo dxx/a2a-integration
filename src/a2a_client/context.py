@@ -26,5 +26,8 @@ def build_call_context(context: RequestContext) -> ClientCallContext :
         service_parameters=context.header_parameters
     )
 
-def build_metadata(context: RequestContext) -> struct_pb2.Struct:
-    return json_format.ParseDict(context.request_metadata, struct_pb2.Struct())
+
+def build_metadata(context: RequestContext) -> struct_pb2.Struct | None:
+    if context.request_metadata:
+        return json_format.ParseDict(context.request_metadata, struct_pb2.Struct())
+    return None
