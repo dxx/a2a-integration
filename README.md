@@ -52,6 +52,7 @@ src/
 |------|------|
 | `attach_app_server(app)` | 将 A2A 路由附加到已有的 Starlette / FastAPI 应用 |
 | `request_handler()` | 获取请求处理器 |
+| `startup()` / `shutdown()` | 初始化 / 释放共享存储与活跃 task（幂等） |
 
 **核心抽象**:
 - `RunnableAgent` - 抽象类，需实现 `invoke()` 和 `stream()` 方法
@@ -59,6 +60,27 @@ src/
 **组件**:
 - `converter.py` - 请求/响应转换器
 - `context.py` - 请求上下文
+- `storage.py` - 共享存储组合（task 状态 + 跨副本事件流）
+
+
+## 共享存储（多副本部署）
+
+多副本部署时，task 的状态与事件流必须放在共享存储里，否则各副本互相看不见对方的 task。
+
+`A2AServerAgent` 通过 `shared_storage` 参数开启：
+
+| 参数 | 说明 |
+|------|------|
+| `shared_storage` | 共享存储组合（task 状态 + 跨副本事件流）。默认 `None`，即进程内的 `InMemoryTaskStore`（仅单副本） |
+| `interrupted_task_timeout` | 停在 `input-required` / `auth-required` 的 task 空闲多少秒后释放运行时占用；`None` 表示永不释放 |
+
+### 怎么选 task_store
+
+| 场景 | task_store | event_stream |
+|------|-----------|--------------|
+| 单进程，允许重启丢 task | `InMemoryTaskStore`（默认，不传 `shared_storage`） | 不需要 |
+| 单进程，要重启不丢 / 多副本 | `DatabaseTaskStore` | 不需要 |
+| 多副本，夸副本事件流 | `VersionedDatabaseTaskStore` | `DatabaseTaskEventStream` |
 
 
 ## 协议支持
