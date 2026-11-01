@@ -150,15 +150,22 @@ def create_cluster_shared_storage(
 ) -> SharedStorage:
     """创建基于集群的共享存储。
 
+    带乐观并发保护的 `VersionedDatabaseTaskStore` + `DatabaseTaskEventStream`，
+    其它副本能订阅到正在运行的 task 的后续事件。
+
     Args:
         engine: SQLAlchemy AsyncEngine。
         create_table: 是否在初始化时建表。
         poll_interval_s: 事件流的轮询间隔（秒）。
         owner_resolver: owner 作用域解析函数，决定 task 在不同用户间的
-            隔离方式。默认取 `context.user.user_name`。
+            隔离方式。默认取 `context.user.user_name`。多个副本必须解析出
+            相同的 owner，否则互相看不到对方的 task。
 
     Returns:
         组合好的 `SharedStorage`。
+    
+    Raises:
+        ImportError: 未安装 SQLAlchemy 与数据库驱动时抛出。
     """
 
     from a2a.server.cluster import (
