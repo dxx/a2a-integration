@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from contextlib import asynccontextmanager
 from typing import Any, AsyncIterator
 from dataclasses import dataclass
 from starlette.applications import Starlette
@@ -20,6 +21,8 @@ from a2a.server.events.event_queue import EventQueue
 from a2a.server.agent_execution.agent_executor import AgentExecutor
 from a2a.server.agent_execution.context import RequestContext as A2ARequestContext
 from a2a.server.tasks import InMemoryTaskStore
+from a2a.server.cluster.task_store import VersionedTaskStore
+from a2a_server.storage import SharedStorage
 
 from a2a.server.routes.jsonrpc_routes import create_jsonrpc_routes
 from a2a.server.routes.rest_routes import create_rest_routes
@@ -278,7 +281,30 @@ class A2AServerAgent:
         request_converter: RequestPartConverter | None = None,
         response_converter: ResponsePartConverter | None = None,
         enable_http_v0_3_compat: bool = False,
+        shared_storage: SharedStorage | None = None,
+        interrupted_task_timeout: float | None = None,
     ):
+        """A2A 服务端 Agent。
+
+        Args:
+            agent: 待执行的 Agent 实现。
+            agent_card: Agent 卡片。
+            extended_agent_card: 可选的扩展 Agent 卡片。
+            request_converter: 请求内容转换器。
+            response_converter: 响应内容转换器。
+            enable_http_v0_3_compat: 是否开启 v0.3 协议兼容。
+            shared_storage: 共享存储。传入后 task 的状态与事件流
+                放在共享存储里，其它副本才能读到本副本的 task 并回放其事件。
+                存储的建表与释放在 `attach_app_server()` 挂载的 lifespan 中
+                随启停一起完成。为 `None` 时使用进程内的
+                `InMemoryTaskStore`，仅适用于单副本部署。
+            interrupted_task_timeout: 处于 `input-required` / `auth-required`
+                状态的 task 空闲多少秒后释放其运行时占用（秒）。`None` 表示
+                永不释放。释放后后续请求会从共享存储重建。
+
+        Raises:
+            ValueError: 参数组合不合法。
+        """
         self._agent = agent
         self._agent_card = agent_card
         self._extended_agent_card = extended_agent_card
@@ -286,8 +312,78 @@ class A2AServerAgent:
         self._response_converter = response_converter
         self._enable_v0_3_compat = enable_http_v0_3_compat
 
+        self._validate_cluster_options(
+            shared_storage=shared_storage,
+            interrupted_task_timeout=interrupted_task_timeout,
+        )
+        self._shared_storage = shared_storage
+        self._task_store = (
+            shared_storage.task_store if shared_storage is not None else None
+        )
+        self._event_stream = (
+            shared_storage.event_stream if shared_storage is not None else None
+        )
+        self._interrupted_task_timeout = interrupted_task_timeout
+
+        self._started = False
+        self._closed = False
+
         self._agent_executor = self._create_agent_executor()
         self._request_handler = self._create_request_handler()
+
+    @staticmethod
+    def _validate_cluster_options(
+        shared_storage: SharedStorage | None,
+        interrupted_task_timeout: float | None,
+    ) -> None:
+        """校验共享存储相关参数组合。
+
+        尽早暴露错误配置，而不是等到多副本运行时才发现跨副本读不到 task。
+        """
+
+        if interrupted_task_timeout is not None and interrupted_task_timeout <= 0:
+            raise ValueError(
+                'interrupted_task_timeout 必须大于 0，None 表示不自动释放。'
+            )
+
+        if shared_storage is None:
+            return
+
+        task_store = shared_storage.task_store
+        event_stream = shared_storage.event_stream
+
+        if event_stream is None:
+            if isinstance(task_store, VersionedTaskStore):
+                logger.warning(
+                    '配置了 VersionedTaskStore 但没有配置 event_stream：'
+                    '跨副本事件流未启用，'
+                    '其他副本无法订阅本副本正在运行的 task 的事件流。'
+                )
+            return
+
+        if isinstance(task_store, InMemoryTaskStore):
+            raise ValueError(
+                'shared_storage 需要配合共享 task_store 使用：'
+                'InMemoryTaskStore 仅存在于当前进程，'
+                '其他副本无法读取 task，跨副本订阅无法生效。'
+                '请改用 DatabaseTaskStore 或 VersionedDatabaseTaskStore 等共享存储。'
+            )
+
+        # DatabaseTaskEventStream 靠轮询 task_events 表工作，而那张表只有
+        # VersionedTaskStore 才会写（普通 store 的 save 没有 event 参数）。
+        # 配错了不会报错，只会静默收不到事件，所以在这里拦下。
+        from a2a.server.cluster import DatabaseTaskEventStream
+
+        if isinstance(event_stream, DatabaseTaskEventStream) and not isinstance(
+            task_store, VersionedTaskStore
+        ):
+            raise ValueError(
+                'DatabaseTaskEventStream 需要 VersionedTaskStore：'
+                '普通 TaskStore（如 DatabaseTaskStore）不写事件日志，'
+                '跨副本订阅只能拿到快照且不会报错。'
+                '请改用 VersionedDatabaseTaskStore，'
+                '或换用自行投递事件的自定义 TaskEventStream。'
+            )
 
     def attach_app_server(self, app: Starlette):
         """将 A2A 的相关路由附加到 App 中
@@ -300,6 +396,80 @@ class A2AServerAgent:
 
         app.routes.extend(agent_card_routes)
         app.routes.extend(self._flatten_routers(protocol_routers))
+
+        self._attach_lifespan(app)
+
+    def _attach_lifespan(self, app: Starlette) -> None:
+        """把自身的启停挂到 App 的 lifespan 上。
+
+        Starlette 与 FastAPI 都将 lifespan 保存在 `app.router.lifespan_context`，
+        这里包一层，保证存储的初始化在用户 lifespan 之内完成，
+        而释放在用户 lifespan 退出之前完成。
+        """
+
+        original_lifespan = app.router.lifespan_context
+
+        @asynccontextmanager
+        async def lifespan(app_instance: Starlette):
+            async with original_lifespan(app_instance):
+                await self.startup()
+                try:
+                    yield
+                finally:
+                    await self.shutdown()
+
+        app.router.lifespan_context = lifespan
+
+    async def startup(self) -> None:
+        """初始化共享存储。幂等，可重复调用。
+
+        与 `shutdown()` 配对使用，stop 之后可以再次 start。
+        """
+
+        if self._started:
+            return
+        self._started = True
+        self._closed = False
+
+        if self._shared_storage is not None:
+            await self._shared_storage.initialize()
+
+    async def shutdown(self) -> None:
+        """释放活跃 task、后台协程与共享存储。幂等，可重复调用。
+
+        之后仍可再次 `startup()`，存储会被重新初始化。
+        """
+
+        if self._closed:
+            return
+        self._closed = True
+        # 允许 stop 之后再次 start
+        self._started = False
+
+        request_handler = self._request_handler
+        if request_handler is not None:
+            aclose = getattr(request_handler, 'aclose', None)
+            if aclose is not None:
+                await aclose()
+
+        if self._shared_storage is not None:
+            await self._shared_storage.aclose()
+
+    async def __aenter__(self) -> 'A2AServerAgent':
+        """支持 `async with agent:`，等价于 `await agent.startup()`。
+
+        仅在不使用 `attach_app_server()` 时需要 —— 后者已经通过 lifespan
+        完成了启停。两条路径的 `startup()` / `shutdown()` 都是幂等的，
+        混用不会重复释放资源。
+        """
+
+        await self.startup()
+        return self
+
+    async def __aexit__(self, exc_type, exc_value, traceback) -> None:
+        """等价于 `await agent.shutdown()`。"""
+
+        await self.shutdown()
 
     def request_handler(self) -> RequestHandler:
         if not self._request_handler:
@@ -320,12 +490,13 @@ class A2AServerAgent:
         if not self._agent_card:
             raise ValueError("AgentCard is none")
 
-        task_store = InMemoryTaskStore()
         return DefaultRequestHandler(
             agent_executor=self._agent_executor,
-            task_store=task_store,
+            task_store=self._task_store or InMemoryTaskStore(),
             agent_card=self._agent_card,
             extended_agent_card=self._extended_agent_card,
+            event_stream=self._event_stream,
+            interrupted_task_timeout=self._interrupted_task_timeout,
         )
 
 
