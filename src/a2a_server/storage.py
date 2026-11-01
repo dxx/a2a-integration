@@ -37,13 +37,15 @@ worker，或多台机器上的多个副本）看到同一份 task。本模块提
 任何事件。
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
 from a2a.server.tasks.task_store import TaskStore
 from a2a.server.cluster.event_stream import TaskEventStream
 from a2a.server.cluster.task_store import VersionedTaskStore
-from a2a.server.owner_resolver import OwnerResolver, resolve_user_scope
+from a2a.server.context import ServerCallContext
+from a2a.server.owner_resolver import resolve_user_scope as resolve_user_scope_for_a2a
 
 
 @dataclass
@@ -95,6 +97,15 @@ class SharedStorage:
             await self.engine.dispose()
 
 
+OwnerResolver = Callable[[dict[str, str]], str]
+"""对 a2a.server.owner_resolver.OwnerResolver 进行包装的 OwnerResolver"""
+
+
+def resolve_user_scope(headers: dict[str, str]) -> str:
+    """默认实现根据上下文中的用户解析所有者范围。"""
+    return headers.get("user_id", "") if headers else ""
+
+
 def create_shared_storage(
     engine: Any,
     create_table: bool = True,
@@ -129,10 +140,18 @@ def create_shared_storage(
 
     from a2a.server.tasks import DatabaseTaskStore
 
+    def _inner_resolve_user_scope(context: ServerCallContext) -> str:
+        # 从 context 中取 headers
+        headers = context.state.get("headers", None)
+        if not headers:
+            # 没有 header 回退到默认的 resolve_user_scope
+            return resolve_user_scope_for_a2a(context)
+        return owner_resolver(headers)
+
     task_store = DatabaseTaskStore(
         engine=engine,
         create_table=create_table,
-        owner_resolver=owner_resolver,
+        owner_resolver=_inner_resolve_user_scope,
     )
 
     return SharedStorage(
@@ -173,10 +192,18 @@ def create_cluster_shared_storage(
         VersionedDatabaseTaskStore,
     )
 
+    def _inner_resolve_user_scope(context: ServerCallContext) -> str:
+        # 从 context 中取 headers
+        headers = context.state.get("headers", None)
+        if not headers:
+            # 没有 header 回退到默认的 resolve_user_scope
+            return resolve_user_scope_for_a2a(context)
+        return owner_resolver(headers)
+
     task_store = VersionedDatabaseTaskStore(
         engine=engine,
         create_table=create_table,
-        owner_resolver=owner_resolver,
+        owner_resolver=_inner_resolve_user_scope,
     )
     event_stream = DatabaseTaskEventStream(
         engine=engine,
