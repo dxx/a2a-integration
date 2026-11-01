@@ -29,7 +29,7 @@ import httpx
 import uuid
 
 from a2a.client.card_resolver import A2ACardResolver
-from a2a_client import A2AClientAgent, AgentRequest
+from a2a_client import A2AClientAgent, AgentRequest, RequestContext
 
 
 REPLICA1_URL = os.environ.get("A2A_REPLICA1_URL", "http://127.0.0.1:8080")
@@ -51,6 +51,11 @@ async def main() -> None:
         # 两个副本据此访问同一份对话状态。
         context_id = str(uuid.uuid4())
 
+        request_context = RequestContext(
+            # header 头。用于服务端区分用户的 task
+            header_parameters={"user_id": "user_123"}
+        )
+
         print(f"副本1 = {REPLICA1_URL}")
         print(f"副本2 = {REPLICA2_URL}")
         print(f"context_id = {context_id}\n")
@@ -64,7 +69,7 @@ async def main() -> None:
 
         interrupt_id = None
         interrupt = None
-        async for item in client_1.send_streaming_message(request):
+        async for item in client_1.send_streaming_message(request, request_context):
             if item.require_input:
                 interrupt_id = item.interrupt_id
                 interrupt = item.interrupt
@@ -94,7 +99,7 @@ async def main() -> None:
             },
         )
 
-        async for item in client_2.send_streaming_message(request):
+        async for item in client_2.send_streaming_message(request, request_context):
             if item.require_input:
                 print(f"  -> 仍在等待输入: {item.interrupt}")
                 break

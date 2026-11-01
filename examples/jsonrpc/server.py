@@ -39,13 +39,12 @@ def run():
                 url=f"http://{host}:{port}/a2a/jsonrpc",
                 # JSONRPC, HTTP+JSON 或 GRPC
                 protocol_binding=PROTOCOL_JSON_RPC, 
-                protocol_version=PROTOCOL_VERSION_1_0 # 协议版本 1.0 或 0.3
+                protocol_version=PROTOCOL_VERSION_1_0 # 协议版本 1.0
             ),
             AgentInterface(
                 url=f"http://{host}:{port}/a2a/jsonrpc",
                 protocol_binding=PROTOCOL_JSON_RPC,
-                # 0.3 版本作为兼容的主协议
-                protocol_version=PROTOCOL_VERSION_0_3 # 说明兼容 0.3
+                protocol_version=PROTOCOL_VERSION_0_3 # 兼容 0.3
             )
         ],
         version="0.0.1",

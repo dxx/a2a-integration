@@ -44,8 +44,7 @@ def run():
             AgentInterface(
                 url=f"http://{host}:{port}/a2a/jsonrpc",
                 protocol_binding=PROTOCOL_JSON_RPC,
-                # 0.3 版本作为兼容的主协议
-                protocol_version=PROTOCOL_VERSION_0_3 # 说明兼容 0.3
+                protocol_version=PROTOCOL_VERSION_0_3 # 兼容 0.3
             )
         ],
         version="0.0.1",

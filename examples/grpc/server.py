@@ -42,13 +42,12 @@ async def run():
             AgentInterface(
                 url=f"{host}:{grpc_port}",
                 protocol_binding=PROTOCOL_GRPC,
-                protocol_version=PROTOCOL_VERSION_1_0,
+                protocol_version=PROTOCOL_VERSION_1_0, # 协议版本 1.0
             ),
             AgentInterface(
                 url=f"{host}:{compat_grpc_port}",
                 protocol_binding=PROTOCOL_GRPC,
-                # 第一个 0.3 版本作为兼容的主协议
-                protocol_version=PROTOCOL_VERSION_0_3,  # 说明兼容 0.3
+                protocol_version=PROTOCOL_VERSION_0_3,  # 兼容 0.3
             ),
         ],
         version="0.0.1",

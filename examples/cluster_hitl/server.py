@@ -27,9 +27,9 @@
 脚本所在目录的 ``checkpoints.sqlite``，跑同一个脚本的副本天然共享。
 """
 
+import sys_path
 import argparse
 import asyncio
-import sys_path
 from pathlib import Path
 
 import uvicorn
@@ -39,12 +39,12 @@ from a2a.types import (
     AgentInterface,
     AgentSkill,
 )
-from a2a_common import PROTOCOL_JSON_RPC, PROTOCOL_VERSION_1_0
-from a2a_server import A2AServerAgent
-from a2a_server.storage import create_shared_storage
 from fastapi import FastAPI
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from sqlalchemy.ext.asyncio import create_async_engine
+
+from a2a_common import PROTOCOL_JSON_RPC, PROTOCOL_VERSION_1_0
+from a2a_server import A2AServerAgent, create_shared_storage, resolve_user_scope, create_cluster_shared_storage
 
 from examples.langgraph_agent.agent_hitl import HITLLangGraphAgent
 
@@ -117,7 +117,8 @@ async def main(database_url: str, host: str, port: int) -> None:
     # task_store 必须是 VersionedTaskStore 家族，
     # event_stream 必须与它共用同一个 engine，否则跨副本订阅读不到事件。
     engine = create_async_engine(database_url, pool_pre_ping=True)
-    storage = create_shared_storage(engine)
+    # resolve_user_scope 从请求头中获取 task 所属的 owner
+    storage = create_cluster_shared_storage(engine, owner_resolver=resolve_user_scope)
 
     # 共享存储 2：LangGraph 图状态。
     async with AsyncSqliteSaver.from_conn_string(CHECKPOINT_PATH) as checkpointer:

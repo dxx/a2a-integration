@@ -42,7 +42,7 @@ def run():
             AgentInterface(
                 url=f"http://{host}:{port}/a2a/rest",
                 protocol_binding=PROTOCOL_HTTP_JSON,
-                protocol_version=PROTOCOL_VERSION_0_3 # 说明兼容 0.3
+                protocol_version=PROTOCOL_VERSION_0_3 # 兼容 0.3
             )
         ],
         version="0.0.1",
