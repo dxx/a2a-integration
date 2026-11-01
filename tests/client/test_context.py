@@ -1,7 +1,5 @@
 from google.protobuf import json_format, struct_pb2
 
-import pytest
-
 from a2a_client.context import build_call_context, build_metadata, RequestContext
 from a2a.client import ClientCallContext
 
@@ -32,8 +30,7 @@ class TestBuildMetadata:
 
     def test_with_none_request_metadata(self) -> None:
         ctx = RequestContext(request_metadata=None)
-        with pytest.raises(json_format.ParseError):
-            build_metadata(ctx)
+        assert build_metadata(ctx) is None
 
     def test_with_empty_request_metadata(self) -> None:
         ctx = RequestContext(request_metadata={})

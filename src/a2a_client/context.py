@@ -28,6 +28,6 @@ def build_call_context(context: RequestContext) -> ClientCallContext :
 
 
 def build_metadata(context: RequestContext) -> struct_pb2.Struct | None:
-    if context.request_metadata:
-        return json_format.ParseDict(context.request_metadata, struct_pb2.Struct())
-    return None
+    if context.request_metadata is None:
+        return None
+    return json_format.ParseDict(context.request_metadata, struct_pb2.Struct())
