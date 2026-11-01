@@ -21,7 +21,7 @@ class RequestContext:
     """
 
 
-def build_call_context(context: RequestContext) -> ClientCallContext :
+def build_call_context(context: RequestContext) -> ClientCallContext:
     return ClientCallContext(
         service_parameters=context.header_parameters
     )
