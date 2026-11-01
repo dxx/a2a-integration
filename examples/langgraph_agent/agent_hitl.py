@@ -60,11 +60,22 @@ def resolve_path(file_path: str) -> str:
 class HITLLangGraphAgent(RunnableAgent):
     """基于 LangGraph 支持 Human-in-the-loop 的 Agent 实现。返回 str 类型的数据"""
 
-    def __init__(self):
+    def __init__(self, checkpointer=None):
+        """初始化 Agent。
+
+        Args:
+            checkpointer: LangGraph 的 checkpoint saver，用于保存被中断的图状态。
+                默认使用进程内的 `InMemorySaver`。
+
+                多副本部署时必须传入各副本共享的 saver（例如
+                `AsyncSqliteSaver` 或 `AsyncPostgresSaver`），否则中断发生在
+                副本 A 时，副本 B 拿不到待恢复的图状态，
+                `Command(resume=...)` 会变成空操作且不报错。
+        """
         self._agent = create_agent(
             model=get_chat_model(),
             tools=[read_file, write_file],
-            checkpointer=InMemorySaver(),
+            checkpointer=checkpointer or InMemorySaver(),
             middleware=[
                 HumanInTheLoopMiddleware(
                     interrupt_on={
