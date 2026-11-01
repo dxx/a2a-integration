@@ -7,7 +7,7 @@
 共享存储：
 
 1. **A2A task 状态** —— 由 `create_shared_storage()` 提供的
-   `VersionedDatabaseTaskStore` + `DatabaseTaskEventStream`。副本 B 才能读到副本 A
+   `DatabaseTaskStore`。副本 B 才能读到副本 A
    创建的 `input-required` 任务。
 2. **LangGraph 图状态** —— 由各副本共享的 checkpoint saver。副本 B 才能拿到副本 A
    被中断时保存的待恢复状态。否则 `Command(resume=...)` 会变成空操作且不报错。
