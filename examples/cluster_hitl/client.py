@@ -1,4 +1,4 @@
-"""集群模式客户端示例。
+"""集群 + 人工审批客户端示例。
 
 演示跨副本的人工审批（Human-in-the-Loop）：
 
@@ -6,14 +6,14 @@
    返回 `input-required` 状态；
 2. 第二轮带着审批决定发给**副本 2**，由副本 2 读出同一个 task 并续跑完成。
 
-能这样跑通需要两处共享存储（见 `examples/cluster/server.py`）：
+能这样跑通需要两处共享存储（见 `examples/cluster_hitl/server.py`）：
 
 - A2A task 状态：副本 2 才能读到副本 1 创建的 `input-required` task；
 - LangGraph 图状态：副本 2 才能拿到副本 1 被中断时保存的待恢复状态。
 
 运行（先启动两个副本）::
 
-    uv run python examples/cluster/client.py
+    uv run python examples/cluster_hitl/client.py
 
 环境变量：
 
@@ -98,7 +98,7 @@ async def main() -> None:
             if item.require_input:
                 print(f"  -> 仍在等待输入: {item.interrupt}")
                 break
-            if item.content:
+            elif item.content:
                 print(f"  Agent: {item.content}")
 
         print("\n完成：中断发生在副本 1，恢复由副本 2 完成。")

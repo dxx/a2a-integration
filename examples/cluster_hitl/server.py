@@ -1,14 +1,12 @@
-"""集群模式服务端示例。
+"""集群 + 人工审批服务端示例。
 
-演示如何把 A2A 服务部署成多副本：多个进程共用同一个数据库，
-task 状态与事件流放在共享存储里，任意副本都能读取其它副本创建的 task，
-也能回放其它副本产生的事件流。
+演示如何把 A2A 服务部署成多副本：多个进程共用同一个数据库，task 状态放在
+共享存储里，任意副本都能读取其它副本创建的 task。
 
 本示例使用 `HITLLangGraphAgent`（人工审批）。要跨副本续跑被中断的任务，
 需要两处共享存储：
 
-1. **A2A task 状态** —— 由 `create_shared_storage()` 提供的
-   `VersionedDatabaseTaskStore` + `DatabaseTaskEventStream`。
+1. **A2A task 状态** —— 由 `create_shared_storage()` 提供的 `DatabaseTaskStore`。
    副本 B 才能读到副本 A 创建的 `input-required` 任务。
 2. **LangGraph 图状态** —— 由各副本共享的 checkpoint saver。
    副本 B 才能拿到副本 A 被中断时保存的待恢复状态。
@@ -20,13 +18,13 @@ task 状态与事件流放在共享存储里，任意副本都能读取其它副
     #   postgresql: postgresql+asyncpg://user:pass@localhost:5432/a2a
     #   mysql:      mysql+aiomysql://user:pass@localhost:3306/a2a
     #   sqlite:     sqlite+aiosqlite://./a2a.db
-    uv run python examples/cluster/server.py \
+    uv run python examples/cluster_hitl/server.py \
         --database-url "postgresql+asyncpg://user:pass@localhost:5432/a2a" \
         --port 8080
 
 多副本启动：把 ``--port`` 换成不同端口，多开几个进程即可。
 两个副本必须指向同一个 ``--database-url``；checkpoint 文件固定在
-脚本所在目录的 ``a2a_checkpoints.sqlite``，跑同一个脚本的副本天然共享。
+脚本所在目录的 ``checkpoints.sqlite``，跑同一个脚本的副本天然共享。
 """
 
 import argparse
@@ -43,7 +41,7 @@ from a2a.types import (
 )
 from a2a_common import PROTOCOL_JSON_RPC, PROTOCOL_VERSION_1_0
 from a2a_server import A2AServerAgent
-from a2a_server.storage import create_cluster_shared_storage
+from a2a_server.storage import create_shared_storage
 from fastapi import FastAPI
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from sqlalchemy.ext.asyncio import create_async_engine
@@ -65,7 +63,7 @@ INTERRUPTED_TASK_TIMEOUT = 300
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="集群模式服务端示例")
+    parser = argparse.ArgumentParser(description="集群 + 人工审批服务端示例")
     parser.add_argument(
         "--database-url",
         default=DEFAULT_DATABASE_URL,
@@ -87,18 +85,18 @@ def parse_args() -> argparse.Namespace:
 
 def make_agent_card(host: str, port: int) -> AgentCard:
     skill = AgentSkill(
-        id="cluster",
-        name="集群模式示例",
-        description="演示多副本部署下 task 的共享与事件回放",
-        tags=["集群", "多副本"],
+        id="cluster_hitl",
+        name="集群人工审批示例",
+        description="演示多副本部署下 task 的共享与跨副本中断续跑",
+        tags=["集群", "多副本", "人工审批"],
         examples=["你好"],
         input_modes=["text/plain"],
         output_modes=["text/plain"],
     )
 
     return AgentCard(
-        name="a2a_cluster_agent",
-        description="集群模式 A2A 服务",
+        name="a2a_cluster_hitl_agent",
+        description="集群 + 人工审批 A2A 服务",
         supported_interfaces=[
             AgentInterface(
                 url=f"http://{host}:{port}/a2a/jsonrpc",
@@ -119,7 +117,7 @@ async def main(database_url: str, host: str, port: int) -> None:
     # task_store 必须是 VersionedTaskStore 家族，
     # event_stream 必须与它共用同一个 engine，否则跨副本订阅读不到事件。
     engine = create_async_engine(database_url, pool_pre_ping=True)
-    storage = create_cluster_shared_storage(engine)
+    storage = create_shared_storage(engine)
 
     # 共享存储 2：LangGraph 图状态。
     async with AsyncSqliteSaver.from_conn_string(CHECKPOINT_PATH) as checkpointer:

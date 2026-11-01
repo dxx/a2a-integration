@@ -1,8 +1,7 @@
-# 集群（多副本）部署示例
+# 集群 + 人工审批示例
 
 演示如何把 A2A 服务部署成多副本：多个进程共用同一个数据库，task 状态与事件流
-放在共享存储里，任意副本都能读取其它副本创建的 task，也能回放其它副本产生的
-事件流。
+放在共享存储里，任意副本都能读取其它副本创建的 task。
 
 本示例基于 `HITLLangGraphAgent`（人工审批）。要跨副本续跑被中断的任务，需要两处
 共享存储：
@@ -21,20 +20,20 @@ uv sync --group examples
 **运行**:
 ```bash
 # 副本 1
-uv run python examples/cluster/server.py \
+uv run python examples/cluster_hitl/server.py \
     --database-url "postgresql+asyncpg://postgres:postgres@localhost:5432/a2a" \
     --port 8080
 # 副本 2（同一个数据库）
-uv run python examples/cluster/server.py \
+uv run python examples/cluster_hitl/server.py \
     --database-url "postgresql+asyncpg://postgres:postgres@localhost:5432/a2a" \
     --port 8081
 
 # 客户端：跨副本的人工审批
-uv run python examples/cluster/client.py
+uv run python examples/cluster_hitl/client.py
 ```
 
 **主要功能**:
-- 使用 `create_shared_storage()` 创建共享的 task 存储与事件流
+- 使用 `create_shared_storage()` 创建共享的 task 存储
 - `A2AServerAgent` 注入 `shared_storage` / `interrupted_task_timeout`
 - 存储的建表与 engine 的释放随 Agent 的启停自动完成
 - 客户端第一轮发给副本 1 触发中断，第二轮发给副本 2 续跑完成
@@ -42,7 +41,7 @@ uv run python examples/cluster/client.py
 ## 服务端参数
 
 ```bash
-uv run python examples/cluster/server.py --help
+uv run python examples/cluster_hitl/server.py --help
 ```
 
 | 参数 | 默认值 | 说明 |
@@ -63,7 +62,7 @@ uv run python examples/cluster/server.py --help
 
 ## checkpoint 文件
 
-LangGraph 的 checkpoint 固定写在 `examples/cluster/a2a_checkpoints.sqlite`（脚本所在
+LangGraph 的 checkpoint 固定写在 `examples/cluster_hitl/checkpoints.sqlite`（脚本所在
 目录的绝对路径），**所有副本共享同一个文件**。几个注意点：
 
 - `AsyncSqliteSaver.from_conn_string()` 收的是 **SQLite 文件路径**（或 `file:` URI），
