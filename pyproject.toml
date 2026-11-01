@@ -5,7 +5,7 @@ description = "Implementation of A2A (Agent to Agent) protocol integration based
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "a2a-sdk[http-server]>=1.1.5",
+    "a2a-sdk[http-server]>=1.3.0",
 ]
 
 [build-system]
@@ -30,9 +30,15 @@ dev = [
 ]
 
 examples = [
-    "a2a-sdk[grpc]>=1.1.5",
+    "a2a-sdk[grpc]>=1.3.0",
+    # 按需选择 postgresql / mysql / sqlite。
+    "a2a-sdk[postgresql]>=1.3.0",
+    # "a2a-sdk[mysql]>=1.3.0",
+    # "a2a-sdk[sqlite]>=1.3.0",
     "langchain>=1.2.15",
     "langchain-openai>=1.2.1",
+    # 集群中 langgraph checkpointer 存储
+    "langgraph-checkpoint-sqlite>=3.1.3",
     "fastapi>=0.115.2",
     "uvicorn>=0.46.0",
     "crewai>=1.14.7",
