@@ -349,9 +349,7 @@ class A2AServerAgent:
         return self._request_handler        
 
     async def startup(self) -> None:
-        """初始化共享存储。幂等，可重复调用。
-
-        与 `shutdown()` 配对使用，stop 之后可以再次 start。
+        """初始化共享存储。
         """
 
         if self._started:
@@ -363,9 +361,7 @@ class A2AServerAgent:
         self._started = True
 
     async def shutdown(self) -> None:
-        """释放活跃 task、后台协程与共享存储。幂等，可重复调用。
-
-        之后仍可再次 `startup()`，存储会被重新初始化。
+        """释放活跃 task、后台协程与共享存储。
         """
 
         if self._closed:
@@ -374,7 +370,7 @@ class A2AServerAgent:
 
         request_handler = self._request_handler
         if request_handler is not None:
-            aclose = getattr(request_handler, 'aclose', None)
+            aclose = getattr(request_handler, "aclose", None)
             if aclose is not None:
                 await aclose()
 
