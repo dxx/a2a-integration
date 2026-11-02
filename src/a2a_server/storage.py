@@ -86,7 +86,7 @@ class SharedStorage:
         for resource in (self.task_store, self.event_stream):
             if resource is None:
                 continue
-            initialize = getattr(resource, 'initialize', None)
+            initialize = getattr(resource, "initialize", None)
             if initialize is not None:
                 await initialize()
 
