@@ -238,7 +238,6 @@ class RunnableAgentExecutor(AgentExecutor):
                 )
                 # 要求输入
                 await updater.requires_input(message=message)
-                break
             elif is_task_complete:
                 if content:
                     await updater.add_artifact(
