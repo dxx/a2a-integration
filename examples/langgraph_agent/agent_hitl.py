@@ -3,7 +3,7 @@ from langchain.agents import create_agent
 from langchain.agents.middleware import HumanInTheLoopMiddleware
 from langchain.tools import tool
 from langgraph.checkpoint.memory import InMemorySaver
-from langgraph.types import Command
+from langgraph.types import Command, Interrupt
 from langchain_core.runnables import RunnableConfig
 from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from typing import AsyncIterator
@@ -22,6 +22,13 @@ def read_file(file_path: str) -> str:
     """
 
     file_path = resolve_path(file_path)
+
+    path = Path(file_path)
+    if not path.exists():
+        return f"文件不存在: {file_path}"
+    if path.is_dir():
+        return f"路径是目录而不是文件: {file_path}"
+
     with open(file_path, "r", encoding="utf-8") as f:
         content = f.read()
         return content
@@ -158,6 +165,8 @@ class HITLLangGraphAgent(RunnableAgent):
         
         config: RunnableConfig = {"configurable": {"thread_id": context_id}}
 
+        interrupt: Interrupt | None = None
+        
         async for chunk in self._agent.astream(
             inputs, # type: ignore[arg-type]
             config,
@@ -166,17 +175,13 @@ class HITLLangGraphAgent(RunnableAgent):
         ):
             if chunk["type"] != "updates":
                 continue
-            
+            if interrupt:
+                continue
+
             for source, update in chunk["data"].items():
                 if source == "__interrupt__":
                     interrupt = update[0]
-                    yield AgentResponse(
-                        require_input=True,
-                        content=None,
-                        interrupt=asdict(interrupt)
-                    )
-                    break
-                if source in ("model", "tools"):
+                elif source in ("model", "tools"):
                     # 获取最后的消息
                     latest_message = update["messages"][-1]
 
@@ -212,7 +217,14 @@ class HITLLangGraphAgent(RunnableAgent):
                             require_input=False,
                             content=f"Tool {tool_name} response {tool_response}"
                         )
-                
+        if interrupt:
+            yield AgentResponse(
+                require_input=True,
+                content=None,
+                interrupt=asdict(interrupt)
+            )
+            return
+
         # 完成响应
         yield AgentResponse(
             is_complete=True,
