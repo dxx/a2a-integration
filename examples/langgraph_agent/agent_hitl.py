@@ -165,7 +165,7 @@ class HITLLangGraphAgent(RunnableAgent):
         
         config: RunnableConfig = {"configurable": {"thread_id": context_id}}
 
-        interrupt: Interrupt | None = None
+        interrupted = False
         
         async for chunk in self._agent.astream(
             inputs, # type: ignore[arg-type]
@@ -175,12 +175,19 @@ class HITLLangGraphAgent(RunnableAgent):
         ):
             if chunk["type"] != "updates":
                 continue
-            if interrupt:
+            if interrupted:
                 continue
 
             for source, update in chunk["data"].items():
                 if source == "__interrupt__":
+                    interrupted = True
                     interrupt = update[0]
+                    yield AgentResponse(
+                        require_input=True,
+                        content=None,
+                        interrupt=asdict(interrupt)
+                    )
+                    break
                 elif source in ("model", "tools"):
                     # 获取最后的消息
                     latest_message = update["messages"][-1]
@@ -217,17 +224,11 @@ class HITLLangGraphAgent(RunnableAgent):
                             require_input=False,
                             content=f"Tool {tool_name} response {tool_response}"
                         )
-        if interrupt:
-            yield AgentResponse(
-                require_input=True,
-                content=None,
-                interrupt=asdict(interrupt)
-            )
-            return
 
-        # 完成响应
-        yield AgentResponse(
-            is_complete=True,
-            require_input=False,
-            content=None,
-        )
+        if not interrupted:
+            # 完成响应
+            yield AgentResponse(
+                is_complete=True,
+                require_input=False,
+                content=None,
+            )
